@@ -1,14 +1,6 @@
-# deepseek-harness-metrics
-deepseek-harness-metrics
-
-
 # 2026-2027学术直播，DeepseekHarness 系列专题直播公开课
 
-# 直播主题：🍎AI智能体+Stata计量经济学研究
 
-# 英文主题：2026-Academic-Open-Course-AI-Agent-Assisted-Stata-Econometrics-Research
-
-> 直播时间：2026年07月，具体时间待定
 
 > 来源：数量经济学微信公众号（计量经济学服务中心）
 > 
