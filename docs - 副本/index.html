@@ -1,0 +1,4636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepSeek Harness 实战手册 · 从框架到 Stata 计量工作流</title>
+<meta name="author" content="计量经济网 www.aistata.cn">
+<meta name="description" content="DeepSeek Harness 实战手册（2026年11月—2027年1月系列公开课资料）：12 章覆盖安装与桌面版、模型配置与运行模式、插件开发与发布、Stata-Kernel-Jupyter 与 AIStata MCP 应用、论文复现六阶段与全部资源链接。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234D6BFE'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-size='28' font-weight='bold' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --accent:#4D6BFE;
+  --accent-2:#8B5CF6;
+  --accent-soft:#EEF2FF;
+  --accent-line:#C7D2FE;
+  --bg:#FFFFFF;
+  --bg-soft:#F7F8FB;
+  --bg-code:#F8FAFC;
+  --text:#1B1F24;
+  --text-2:#5B6472;
+  --text-3:#8A93A2;
+  --border:#E6E8EF;
+  --border-strong:#D8DCE6;
+  --sidebar-w:236px;
+  --topbar-h:56px;
+  --signbar-h:34px;
+  --radius:12px;
+  --code-font:"JetBrains Mono","Cascadia Code","SFMono-Regular",Consolas,"Courier New",monospace;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.04);
+  --shadow-md:0 8px 24px rgba(16,24,40,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--topbar-h) + 22px)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  color:var(--text);background:var(--bg);line-height:1.82;font-size:16px;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:rgba(77,107,254,.16)}
+
+/* ============ 顶部平台导航 ============ */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:400;
+  display:flex;align-items:center;gap:14px;padding:0 18px 0 0;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+/* 品牌固定占满左侧栏宽度，平台导航从正文区域起点开始 */
+.tb-brand{
+  display:flex;align-items:center;gap:9px;flex:none;color:var(--text);
+  width:calc(var(--sidebar-w) - 14px);padding-left:18px;
+}
+.tb-brand:hover{text-decoration:none}
+.tb-mark{
+  width:28px;height:28px;border-radius:8px;flex:none;color:#fff;font-size:13px;font-weight:800;
+  background:linear-gradient(135deg,#4D6BFE,#8B5CF6);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 10px rgba(77,107,254,.28);
+}
+.tb-name{font-size:13.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap}
+.tb-name em{display:block;font-style:normal;font-size:10.5px;font-weight:600;color:var(--text-3);letter-spacing:.02em}
+.tb-sep{width:1px;height:22px;background:var(--border);flex:none}
+.tb-nav{display:flex;align-items:center;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+.tb-nav::-webkit-scrollbar{display:none}
+.tb-nav a{
+  font-size:13px;font-weight:650;color:#4B5563;padding:7px 11px;border-radius:8px;
+  white-space:nowrap;transition:background .15s,color .15s;
+}
+.tb-nav a:hover{background:#F1F3F9;color:#111827;text-decoration:none}
+.tb-nav a.active{background:var(--accent-soft);color:var(--accent);font-weight:800}
+
+/* ============ 阅读进度 ============ */
+#progress{position:fixed;top:var(--topbar-h);left:0;height:3px;width:0;
+  background:linear-gradient(90deg,#4D6BFE,#8B5CF6 60%,#EC4899);
+  z-index:450;transition:width .08s linear}
+
+/* ============ 左侧导航 ============ */
+#sidebar{
+  position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);
+  background:linear-gradient(180deg,#FBFCFE 0%,#F6F7FB 100%);
+  border-right:1px solid var(--border);overflow-y:auto;z-index:200;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);scrollbar-width:thin;
+}
+#sidebar::-webkit-scrollbar{width:8px}
+#sidebar::-webkit-scrollbar-thumb{background:#D9DEE8;border-radius:4px}
+.sidebar-head{padding:20px 20px 14px;border-bottom:1px solid var(--border)}
+.sidebar-head .logo{display:flex;align-items:center;gap:11px}
+.sidebar-head .logo .mark{
+  width:36px;height:36px;border-radius:10px;flex:none;color:#fff;font-size:14px;font-weight:800;
+  background:linear-gradient(135deg,#4D6BFE,#8B5CF6);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(77,107,254,.28);
+}
+.sidebar-head .brand{font-size:15.5px;font-weight:800;line-height:1.25;letter-spacing:-.01em;white-space:nowrap}
+.sidebar-head .brand-sub{font-size:11.5px;color:var(--text-2);font-weight:650;letter-spacing:.01em;margin-top:2px;white-space:nowrap}
+.sidebar-head .sub{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+  color:#414A57;letter-spacing:.04em;margin-top:9px;line-height:1.6}
+.sidebar-head .sub::before{content:"";width:3px;height:12px;border-radius:2px;background:linear-gradient(180deg,#4D6BFE,#8B5CF6)}
+.sidebar-head .edition{display:inline-flex;align-items:center;gap:6px;margin-top:9px;
+  font-size:11px;color:#4B5563;background:#fff;border:1px solid var(--border);
+  padding:3px 9px;border-radius:999px}
+.sidebar-head .edition i{width:6px;height:6px;border-radius:50%;background:#22C55E;display:block}
+
+.search-wrap{padding:14px 16px 6px}
+.search-wrap input{
+  width:100%;padding:8px 12px 8px 32px;font-size:13px;color:var(--text);
+  border:1px solid var(--border);border-radius:9px;background:#fff;outline:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A93A2' stroke-width='2.2'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>");
+  background-repeat:no-repeat;background-position:11px center;transition:border-color .15s,box-shadow .15s;
+}
+.search-wrap input:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px rgba(77,107,254,.1)}
+
+.nav{padding:8px 12px 60px}
+.nav-part{font-size:11px;font-weight:800;color:var(--text-3);letter-spacing:.06em;margin:20px 12px 7px}
+.nav a{
+  display:flex;align-items:center;gap:10px;padding:7px 11px;margin:1px 0;
+  border-radius:9px;color:#333A45;font-size:13.5px;line-height:1.45;
+  border-left:3px solid transparent;transition:background .14s,color .14s;
+}
+.nav a .no{
+  flex:none;min-width:24px;height:23px;padding:0 4px;border-radius:6px;
+  background:#EAEDF4;color:#6B7280;font-size:10.5px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;
+}
+.nav a:hover{background:#EBEEF6;text-decoration:none;color:#111827}
+.nav a.active{background:var(--accent-soft);color:var(--accent);border-left-color:var(--accent);font-weight:700}
+.nav a.active .no{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(77,107,254,.3)}
+.nav a.hide{display:none}
+.nav-empty{display:none;padding:10px 14px;font-size:12.5px;color:var(--text-3)}
+.nav-empty.show{display:block}
+
+/* ============ 主内容 ============ */
+#main{
+  margin-left:var(--sidebar-w);
+  padding:var(--topbar-h) 46px calc(var(--signbar-h) + 56px);
+}
+article{max-width:900px;margin:0 auto}
+
+/* 封面 */
+#cover{
+  position:relative;margin:0 -46px;padding:66px 46px 52px;
+  background:
+    radial-gradient(900px 380px at 8% -10%,rgba(77,107,254,.13),transparent 60%),
+    radial-gradient(700px 360px at 95% 8%,rgba(139,92,246,.12),transparent 62%),
+    linear-gradient(180deg,#FBFCFE 0%,#FFFFFF 72%);
+  border-bottom:1px solid var(--border);overflow:hidden;
+}
+#cover::after{
+  content:"";position:absolute;right:-80px;top:-60px;width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(77,107,254,.10),transparent 68%);
+}
+.cover-inner{max-width:900px;margin:0 auto;position:relative;z-index:1}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;
+  letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-bottom:16px}
+.eyebrow::before{content:"";width:26px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+#cover h1{font-size:clamp(32px,4.6vw,50px);line-height:1.16;letter-spacing:-.035em;font-weight:850;color:#111827}
+#cover h1 .grad{background:linear-gradient(100deg,#4D6BFE 0%,#7C5CFC 55%,#A855F7 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.cover-sub{margin-top:14px;font-size:18px;color:#3F4754;font-weight:600;letter-spacing:.01em}
+.cover-desc{margin-top:12px;font-size:14.5px;color:var(--text-2);max-width:660px;line-height:1.8}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font-size:12px;color:#4B5563;background:rgba(255,255,255,.85);border:1px solid var(--border);
+  padding:5px 11px;border-radius:999px;backdrop-filter:blur(4px)}
+.chip b{color:var(--accent);font-weight:800}
+.cover-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;
+  font-size:14px;font-weight:700;transition:transform .15s,box-shadow .15s,background .15s}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,#4D6BFE,#7C5CFC);color:#fff;
+  box-shadow:0 8px 22px rgba(77,107,254,.32)}
+.btn.ghost{background:#fff;color:#374151;border:1px solid var(--border-strong);box-shadow:var(--shadow-sm)}
+.btn.ghost:hover{border-color:var(--accent-line);color:var(--accent)}
+
+/* 本书概览 */
+.overview{margin-top:44px}
+.overview-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.overview-head h2{font-size:20px;font-weight:850;padding:0;margin:0;letter-spacing:-.015em}
+.overview-head h2::before{display:none}
+.overview-head .hint{font-size:12px;color:var(--text-3)}
+.overview-intro{font-size:13.8px;color:var(--text-2);line-height:1.8;max-width:760px;margin-bottom:18px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{
+  display:flex;flex-direction:column;gap:6px;padding:15px 16px 13px;
+  background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:12px;
+  box-shadow:var(--shadow-sm);transition:transform .18s,box-shadow .18s,border-color .18s;
+}
+.card:hover{text-decoration:none;transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--accent-line)}
+.card .c-top{display:flex;align-items:center;gap:8px}
+.card .c-no{
+  flex:none;min-width:22px;height:22px;padding:0 5px;border-radius:6px;
+  background:var(--accent-soft);color:var(--accent);font-size:10.5px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+.card .c-title{font-size:14.5px;font-weight:800;color:#151A21;letter-spacing:-.01em}
+.card .c-desc{font-size:12.5px;color:var(--text-2);line-height:1.65}
+.card .c-more{margin-top:auto;padding-top:6px;font-size:11.5px;font-weight:700;color:var(--accent)}
+
+/* 课程推广 */
+.promo{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:30px;align-items:center;
+  margin-top:20px;padding:26px 30px;border-radius:16px;
+  background:linear-gradient(135deg,#F5F7FF 0%,#FBF8FF 100%);
+  border:1.5px solid var(--accent-line);box-shadow:var(--shadow-md);
+}
+.promo .p-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent-2);text-transform:uppercase}
+.promo .p-title{display:block;margin-top:8px;font-size:16.5px;font-weight:800;color:#1E2430;line-height:1.55}
+.promo .p-meta{margin-top:10px;font-size:13px;color:var(--text-2)}
+.promo .p-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.promo .p-tags span{font-size:12px;color:#4B5563;background:#fff;border:1px solid var(--border);
+  padding:4px 11px;border-radius:999px}
+.promo .p-fig{display:flex;align-items:center;justify-content:center;height:340px;flex:none}
+.promo .p-fig img{height:100%;width:auto;max-width:100%;object-fit:contain;
+  border-radius:12px;border:1px solid var(--border);display:block;box-shadow:var(--shadow-md)}
+@media(max-width:1240px){
+  .promo .p-fig{height:250px}
+}
+
+/* 章节 */
+section.chapter{padding-top:44px;margin-top:44px;border-top:1px solid var(--border);scroll-margin-top:calc(var(--topbar-h) + 16px)}
+.ch-head{margin-bottom:26px}
+.kicker{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;
+  color:var(--accent);letter-spacing:.08em;margin-bottom:9px}
+.kicker span.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block}
+h1.ch-title{font-size:31px;font-weight:850;line-height:1.28;margin-bottom:8px;letter-spacing:-.025em;color:#111827}
+.ch-sub{color:var(--text-2);font-size:14.5px;margin-bottom:10px}
+.ch-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-3);
+  padding-bottom:16px;border-bottom:1px dashed var(--border)}
+.ch-meta span{display:inline-flex;align-items:center;gap:5px}
+
+h2{font-size:21px;font-weight:800;margin:40px 0 14px;padding-left:13px;position:relative;
+  letter-spacing:-.012em;scroll-margin-top:calc(var(--topbar-h) + 20px)}
+h2::before{content:"";position:absolute;left:0;top:.22em;bottom:.22em;width:4px;border-radius:3px;
+  background:linear-gradient(180deg,#4D6BFE,#8B5CF6)}
+h2 .anchor{opacity:0;visibility:hidden;margin-left:8px;font-weight:600;color:var(--accent-line);
+  font-size:16px;transition:opacity .15s}
+h2:hover .anchor{opacity:1;visibility:visible}
+h3{font-size:16.5px;font-weight:800;margin:26px 0 8px;color:#232936;scroll-margin-top:calc(var(--topbar-h) + 20px)}
+p{margin:11px 0}
+ul,ol{margin:11px 0 11px 1.45em}
+li{margin:5px 0}
+li::marker{color:#9AA3B2}
+strong{font-weight:750;color:#151A21}
+hr{border:none;border-top:1px solid var(--border);margin:28px 0}
+
+blockquote{margin:16px 0;padding:13px 18px;background:var(--accent-soft);
+  border-left:4px solid var(--accent);border-radius:0 10px 10px 0;color:#374151}
+blockquote p{margin:5px 0}
+blockquote strong{color:#1E3A8A}
+
+/* 行内代码与代码块 */
+code{font-family:var(--code-font);font-size:.855em;background:#EFF1F5;
+  padding:2px 6px;border-radius:5px;color:#C7254E;border:1px solid rgba(0,0,0,.03)}
+.code-card{margin:16px 0;border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;background:var(--bg-code);box-shadow:var(--shadow-sm)}
+.code-head{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;background:#F1F4F9;border-bottom:1px solid var(--border)}
+.code-lang{font-family:var(--code-font);font-size:10.5px;font-weight:700;color:#6B7280;
+  letter-spacing:.08em;text-transform:uppercase}
+.copy-btn{font-size:11px;color:#6B7280;background:#fff;border:1px solid var(--border);
+  border-radius:6px;padding:3px 9px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent-line)}
+.copy-btn.done{color:#15803D;border-color:#BBF7D0;background:#F0FDF4}
+pre{padding:15px 17px;overflow-x:auto;line-height:1.62;margin:0;background:transparent}
+pre code{background:none;padding:0;color:#1F2937;font-size:13.3px;border:none;white-space:pre;line-height:1.7}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow-sm);background:#fff}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;
+  word-break:break-word}
+td code{word-break:break-all}
+th{background:linear-gradient(180deg,#F8FAFC,#F1F4F9);font-weight:800;color:#374151}
+tbody tr:nth-child(even){background:#FCFDFF}
+tbody tr:hover{background:#F6F8FF}
+tr:last-child td{border-bottom:none}
+
+/* 提示框 */
+.callout{border-radius:var(--radius);padding:13px 16px 13px 15px;margin:18px 0;
+  border:1px solid;border-left-width:4px;font-size:14.5px;box-shadow:var(--shadow-sm)}
+.callout .co-title{font-weight:800;margin-bottom:5px;display:flex;align-items:center;gap:8px;font-size:14.5px}
+.callout .co-ico{font-size:15px;line-height:1}
+.callout .co-body>p:first-child{margin-top:2px}
+.callout .co-body>p:last-child{margin-bottom:2px}
+.callout.note{background:#F2F7FF;border-color:#BFDBFE;border-left-color:#3B82F6}
+.callout.note .co-title{color:#1D4ED8}
+.callout.tip{background:#F2FCF5;border-color:#BBF7D0;border-left-color:#22C55E}
+.callout.tip .co-title{color:#15803D}
+.callout.warning{background:#FFFBF0;border-color:#FDE68A;border-left-color:#F59E0B}
+.callout.warning .co-title{color:#B45309}
+.callout.important{background:#FEF3F3;border-color:#FECACA;border-left-color:#EF4444}
+.callout.important .co-title{color:#B91C1C}
+
+/* 图片与图组 */
+figure{margin:18px 0}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--border);
+  border-radius:10px;background:#fff;box-shadow:var(--shadow-sm)}
+figcaption{margin-top:8px;text-align:center;font-size:12.5px;color:var(--text-3);line-height:1.6}
+.figgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}
+.figgrid figure{margin:0}
+figure.fig-single{max-width:760px;margin:20px auto}
+
+/* 全书地图（可点击） */
+.chapmap{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px 0}
+.chapmap a{
+  display:grid;grid-template-columns:auto 1fr;column-gap:11px;row-gap:2px;align-items:center;
+  padding:11px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow-sm);transition:all .16s;
+}
+.chapmap a:hover{text-decoration:none;border-color:var(--accent-line);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.chapmap b{grid-row:1 / span 2;min-width:24px;height:24px;border-radius:7px;background:var(--accent-soft);color:var(--accent);
+  font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;
+}
+.chapmap span{font-size:14px;font-weight:800;color:#1F2937;line-height:1.5}
+.chapmap i{font-style:normal;font-size:11.5px;color:var(--text-3);line-height:1.55}
+
+/* 章节翻页 */
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:44px;padding-top:22px;
+  border-top:1px dashed var(--border)}
+.pager a{display:block;padding:13px 16px;border:1px solid var(--border);border-radius:11px;
+  background:#fff;transition:all .18s;box-shadow:var(--shadow-sm)}
+.pager a:hover{border-color:var(--accent-line);box-shadow:var(--shadow-md);text-decoration:none;transform:translateY(-1px)}
+.pager .pg-label{font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:.06em}
+.pager .pg-title{font-size:14px;color:var(--text);font-weight:750;margin-top:3px}
+.pager a.next{text-align:right}
+.pager a.disabled{visibility:hidden}
+
+/* 页脚 */
+footer{margin-top:52px;padding:24px 0 6px;border-top:1px solid var(--border);
+  color:var(--text-3);font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+footer b{color:var(--text-2);font-weight:700}
+
+/* 底部固定落款 */
+#signbar{
+  position:fixed;bottom:0;left:var(--sidebar-w);right:0;height:var(--signbar-h);z-index:210;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:rgba(255,255,255,.93);backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);font-size:11.5px;color:var(--text-2);
+  letter-spacing:.01em;flex-wrap:nowrap;overflow:hidden;
+}
+#signbar b{font-weight:800;color:#374151}
+#signbar i{width:3px;height:3px;border-radius:50%;background:#C7CCD8;display:block;flex:none}
+#signbar a{color:var(--accent);font-weight:700}
+
+/* 返回顶部 */
+#totop{position:fixed;right:26px;bottom:calc(var(--signbar-h) + 18px);width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#4D6BFE,#7C5CFC);color:#fff;border:none;font-size:17px;cursor:pointer;
+  box-shadow:0 6px 18px rgba(77,107,254,.38);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .2s;z-index:220}
+#totop.show{opacity:1;pointer-events:auto}
+#totop:hover{transform:translateY(-2px)}
+
+/* 移动端 */
+#menu-btn{display:none;position:fixed;top:calc(var(--topbar-h) + 12px);left:12px;z-index:300;
+  width:40px;height:40px;border-radius:11px;background:#fff;border:1px solid var(--border);
+  cursor:pointer;font-size:16px;box-shadow:var(--shadow-md)}
+#mask{display:none;position:fixed;inset:0;background:rgba(15,23,42,.38);z-index:190;backdrop-filter:blur(2px)}
+
+@media(max-width:1180px){
+  #main{padding:var(--topbar-h) 32px calc(var(--signbar-h) + 56px)}
+  #cover{margin:0 -32px;padding:56px 32px 46px}
+  .cards{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:980px){
+  #menu-btn{display:block}
+  #sidebar{transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.14);width:280px}
+  #sidebar.open{transform:none}
+  #mask.show{display:block}
+  #main{margin-left:0;padding:calc(var(--topbar-h) + 56px) 20px calc(var(--signbar-h) + 48px)}
+  #cover{margin:0 -20px;padding:36px 22px 34px}
+  #signbar{left:0;font-size:10px;gap:6px}
+  #signbar .sb-full{display:none}
+  .cards{grid-template-columns:1fr}
+  .promo{grid-template-columns:1fr}
+  .promo .p-fig{display:none}
+  .chapmap{grid-template-columns:1fr}
+  .figgrid{grid-template-columns:1fr}
+  h1.ch-title{font-size:26px}
+  .pager{grid-template-columns:1fr}
+  .pager a.next{text-align:left}
+  #topbar{gap:10px;padding:0 12px}
+  .tb-brand{width:auto;padding-left:0}
+  .tb-brand .tb-name em{display:none}
+  .tb-sep{display:none}
+}
+@media(max-width:560px){
+  #cover h1{font-size:29px}
+  .cover-sub{font-size:16px}
+  .chip{font-size:11px}
+  .btn{font-size:13px;padding:9px 14px}
+}
+@media print{
+  #sidebar,#totop,#progress,#menu-btn,#mask,.pager,.copy-btn,.search-wrap,#topbar,#signbar{display:none!important}
+  #main{margin:0;padding:0}
+  #cover{margin:0;padding:0 0 24px;background:none}
+  section.chapter{page-break-before:always;margin-top:0;padding-top:0;border-top:none}
+  .code-card,.table-wrap,.callout,figure img{box-shadow:none}
+  a{color:inherit}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <a class="tb-brand" href="https://www.aistata.cn/" target="_blank" rel="noopener">
+    <span class="tb-mark">计</span>
+    <span class="tb-name">计量经济网<em>www.aistata.cn</em></span>
+  </a>
+  <nav class="tb-nav">
+    <a class="active" href="https://www.aistata.cn/DeepSeekHarness.html" target="_blank" rel="noopener">DeepSeekHarness</a>
+    <a href="https://www.aistata.cn/Workbuddy.html" target="_blank" rel="noopener">Workbuddy</a>
+    <a href="https://www.aistata.cn/Codex.html" target="_blank" rel="noopener">Codex</a>
+    <a href="https://www.aistata.cn/OpenCode.html" target="_blank" rel="noopener">OpenCode</a>
+    <a href="https://www.aistata.cn/trae.html" target="_blank" rel="noopener">TraeWork</a>
+    <a href="https://www.aistata.cn/doubaowork.html" target="_blank" rel="noopener">豆包工作</a>
+    <a href="https://www.aistata.cn/ClaudeCode.html" target="_blank" rel="noopener">ClaudeCode</a>
+    <a href="https://www.aistata.cn/github-copilot.html" target="_blank" rel="noopener">GitHub Copilot</a>
+    <a href="https://mp.weixin.qq.com/s/LiqQKxHdMilu9FrWnQ5wQg" target="_blank" rel="noopener">2027年1月课程</a>
+  </nav>
+</header>
+
+<div id="progress"></div>
+<button id="menu-btn" aria-label="打开目录">☰</button>
+<div id="mask"></div>
+
+<aside id="sidebar">
+  <div class="sidebar-head">
+    <div class="logo"><span class="mark">DSH</span>
+      <div><div class="brand">DeepSeek Harness</div><div class="brand-sub">2026年11月—2027年1月</div></div>
+    </div>
+    <div class="sub">系列公开课资料</div>
+    <div class="edition"><i></i>12 章 · 持续更新</div>
+  </div>
+  <div class="search-wrap">
+    <input id="nav-search" type="search" placeholder="搜索章节…" aria-label="搜索章节">
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-part">开始</div>
+    <a href="#chapter-0" data-target="chapter-0"><span class="no">序</span>前言</a>
+    <div class="nav-part">基础篇</div>
+    <a href="#chapter-1" data-target="chapter-1"><span class="no">01</span>简介</a>
+    <a href="#chapter-2" data-target="chapter-2"><span class="no">02</span>安装、使用</a>
+    <a href="#chapter-3" data-target="chapter-3"><span class="no">03</span>桌面版</a>
+    <a href="#chapter-4" data-target="chapter-4"><span class="no">04</span>模型配置</a>
+    <a href="#chapter-5" data-target="chapter-5"><span class="no">05</span>运行模式</a>
+    <div class="nav-part">插件篇</div>
+    <a href="#chapter-6" data-target="chapter-6"><span class="no">06</span>插件加载、安装</a>
+    <a href="#chapter-7" data-target="chapter-7"><span class="no">07</span>插件使用、发布</a>
+    <div class="nav-part">Stata 计量实战篇</div>
+    <a href="#chapter-8" data-target="chapter-8"><span class="no">08</span>Stata-Kernel-Jupyter</a>
+    <a href="#chapter-9" data-target="chapter-9"><span class="no">09</span>AIStata MCP</a>
+    <a href="#chapter-10" data-target="chapter-10"><span class="no">10</span>论文复现专题</a>
+    <div class="nav-part">附录</div>
+    <a href="#chapter-11" data-target="chapter-11"><span class="no">11</span>公开课资源与链接</a>
+    <div class="nav-empty">没有匹配的章节</div>
+  </nav>
+</aside>
+
+<main id="main">
+<article>
+
+<section id="cover">
+  <div class="cover-inner">
+    <div class="eyebrow">计量经济网 · 在线书籍</div>
+    <h1>DeepSeek Harness<br><span class="grad">实战手册</span></h1>
+    <p class="cover-sub">从框架到 Stata 计量工作流</p>
+    <p class="cover-desc">系统讲解 DeepSeek 开源智能体框架 DeepSeek Harness（dsh）：从安装、Web UI 与桌面版使用、模型配置，到运行模式与插件生态。理解“一切皆插件”的架构理念，掌握把大模型稳定、可靠、可观测地组织成 Agent 的完整路径。</p>
+    <p class="cover-desc">全书覆盖安装与桌面版、模型与运行模式、插件开发与发布，并把两条数量经济学微信公众号 / 计量经济网开发的 MCP 通道的真实配置与踩坑，落到论文复现的六阶段流程里。</p>
+    <div class="chips">
+      <span class="chip">🧩 4 种运行模式</span>
+      <span class="chip">📦 插件化架构</span>
+      <span class="chip">🖥️ 桌面版 / Web UI 双形态</span>
+      <span class="chip">🕐 持续更新</span>
+    </div>
+    <div class="cover-actions">
+      <a class="btn primary" href="#chapter-0">开始阅读 →</a>
+      <a class="btn ghost" href="#chapter-8">直接看 Stata 实战</a>
+      <a class="btn ghost" href="https://github.com/AIStata/deepseek-harness-metrics" target="_blank" rel="noopener">关于本书</a>
+    </div>
+
+    <div class="overview">
+      <div class="overview-head">
+        <h2>本书概览</h2>
+        <span class="hint">12 张卡片 · 点任意一张直接跳转</span>
+      </div>
+      <p class="overview-intro">本书以<strong>环境搭建 + 日常使用 + 插件生态</strong>为主线，完整覆盖 DeepSeek Harness 的入门路径。每章均包含：操作步骤、速查表格、实战演练与排错指南，内容整理自公开课讲义与官方文档的图文资料，并按“先判断、再操作、最后验收”的顺序重写。</p>
+      <div class="cards">
+      <a class="card" href="#chapter-0"><div class="c-top"><span class="c-no">序</span><span class="c-title">前言</span></div><div class="c-desc">这本书想解决什么问题、怎么读、按什么环境验证，以及全部资源的入口。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-1"><div class="c-top"><span class="c-no">01</span><span class="c-title">简介</span></div><div class="c-desc">从 Agent 概念讲起：模型与 Harness 的分工、“一切皆插件”的架构，以及它适合谁。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-2"><div class="c-top"><span class="c-no">02</span><span class="c-title">安装、使用</span></div><div class="c-desc">桌面版、npm、源码与 Python SDK 四种安装方式，安装前准备、首次配置与常见问题排错。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-3"><div class="c-top"><span class="c-no">03</span><span class="c-title">桌面版</span></div><div class="c-desc">界面四区、工作区为什么强制、三档访问模式，以及只读盘点与生成结果页两次实战。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-4"><div class="c-top"><span class="c-no">04</span><span class="c-title">模型配置</span></div><div class="c-desc">三类提供方、凭据只写机制、推理档位与视觉模态，并完整接入火山方舟 Coding Plan。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-5"><div class="c-top"><span class="c-no">05</span><span class="c-title">运行模式</span></div><div class="c-desc">标准、PTC、极简、创作者四种模式的用途与关系，把试验固化成自定义预设。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-6"><div class="c-top"><span class="c-no">06</span><span class="c-title">插件加载、安装</span></div><div class="c-desc">内置能力与额外安装的区别，插件的最小形态、配置声明、insert: 加载机制与四项验收。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-7"><div class="c-top"><span class="c-no">07</span><span class="c-title">插件使用、发布</span></div><div class="c-desc">会话快照与 HMR，npm / tarball / Git 三种分发途径，构建授权与 commit 锁定。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-8"><div class="c-top"><span class="c-no">08</span><span class="c-title">Stata-Kernel-Jupyter</span></div><div class="c-desc">三个工具、cordis.patch.yml 挂载写法、三条硬性要求与 Stata 许可抢占提醒。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-9"><div class="c-top"><span class="c-no">09</span><span class="c-title">AIStata MCP</span></div><div class="c-desc">23 个工具分组、请求路径图、“配了却没生效”的四连坑复盘与排错速查表。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-10"><div class="c-top"><span class="c-no">10</span><span class="c-title">论文复现专题</span></div><div class="c-desc">六阶段复现流程、复现报告骨架、差异诊断顺序与 headless 批处理进阶用法。</div><div class="c-more">开始阅读 →</div></a>
+      <a class="card" href="#chapter-11"><div class="c-top"><span class="c-no">11</span><span class="c-title">公开课资源与链接</span></div><div class="c-desc">本书 GitHub 仓库、最新公开课、系列专题课、AIStata MCP 与 Stata-Kernel-Jupyter 主页等全部资源入口。</div><div class="c-more">开始阅读 →</div></a>
+      </div>
+
+      <div class="promo">
+        <div class="p-main">
+          <div class="p-kicker">配套课程</div>
+          <a class="p-title" href="https://mp.weixin.qq.com/s/LiqQKxHdMilu9FrWnQ5wQg" target="_blank" rel="noopener">2027 年 AIStata MCP + Workbuddy + Claude 等智能体 + Stata 学术应用专题课</a>
+          <p class="p-meta">Stata 课程已持续开设 10 年 · 2017—2026 年 · 10 年 Stata 经典课程好评</p>
+          <div class="p-tags">
+            <span>AIStata MCP</span>
+            <span>论文复现</span>
+            <span>智能体协作</span>
+            <span>名额有限</span>
+          </div>
+        </div>
+        <div class="p-fig">
+          <img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%9B%BE%E6%80%AA%E5%85%BD_2025%E5%AF%92%E5%81%87%20(3).png" alt="2027 年 AIStata MCP + 智能体 + Stata 学术应用专题课" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="chapter" id="chapter-0">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>开始</div>
+    <h1 class="ch-title">前言：把 Agent 框架讲成能上手的东西</h1>
+    <p class="ch-sub">关于本书的写法、路线与环境约定</p>
+    <div class="ch-meta">
+      <span>📖 序 · 导读</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,472 字</span>
+    </div>
+  </div>
+  <h2 id="c0-s1">这本书想解决什么问题<a class="anchor" href="#c0-s1" aria-label="本节链接">#</a></h2>
+<p>很多人第一次接触 DeepSeek Harness（命令行里叫 <code>dsh</code>）时，会卡在同一个地方：文档里反复出现 profile、插件、补丁、运行模式、MCP 挂载，每个词单看都认识，连起来就不知道从哪下手。</p>
+<p>本书不做术语罗列，而是按“一个人真实会走的路径”来组织：</p>
+<ol>
+<li>先弄清楚它到底解决了什么问题（第 1 章）；</li>
+<li>把它装起来、跑通第一条任务（第 2、3 章）；</li>
+<li>让它接上你自己的模型（第 4 章）；</li>
+<li>学会在不同任务之间切换工作方式（第 5 章）；</li>
+<li>能自己装插件、写插件、把插件交给别人（第 6、7 章）；</li>
+<li>最后把它接到 Stata 上，做真正的计量工作（第 8—10 章）。</li>
+</ol>
+<p>后三章是本书与通用教程最大的不同：<strong>不停留在“框架能干什么”，而是落在“计量研究者拿它干什么”</strong>。</p>
+<h2 id="c0-s2">本书的写法：三次消化<a class="anchor" href="#c0-s2" aria-label="本节链接">#</a></h2>
+<p>写作时给自己定了三条规矩，也建议你按同样的层次去理解：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">层次</th>
+<th style="text-align: left;">做什么</th>
+<th style="text-align: left;">对应本书内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">还原</td>
+<td style="text-align: left;">把“是什么、怎么配”讲准，命令与字段不臆造</td>
+<td style="text-align: left;">基础篇、插件篇</td>
+</tr>
+<tr>
+<td style="text-align: left;">重构</td>
+<td style="text-align: left;">按使用者的决策顺序重排，而不是按功能清单平铺</td>
+<td style="text-align: left;">每章的“先判断，再操作”结构</td>
+</tr>
+<tr>
+<td style="text-align: left;">落地</td>
+<td style="text-align: left;">补上真实场景、踩坑记录与验收标准</td>
+<td style="text-align: left;">Stata 实战篇</td>
+</tr>
+</tbody>
+</table></div>
+<p>所以这本书不是“教程的复制粘贴”。同一个知识点，会尽量补三样东西：<strong>为什么是这样设计的</strong>、<strong>什么时候会踩坑</strong>、<strong>怎么判断自己真的做对了</strong>。</p>
+<div class="callout note"><div class="co-title"><span class="co-ico">📝</span>关于内容来源与原创性</div><div class="co-body"><ul>
+<li>第 1—7 章的知识骨架来自 DeepSeek Harness 的公开文档与公开课讲义，示例场景已替换为计量/数据分析语境；</li>
+<li>第 8—10 章基于本机真实接入记录（Windows 11 + StataMP 18 + AIStata MCP + Stata-Kernel-Jupyter）编写，配置片段来自实际可用文件；</li>
+<li>命令、字段名、错误码属于事实性内容，必须与官方保持一致；叙述、类比、判断与示例属于本书原创。</li>
+</ul>
+<p>DeepSeek Harness 仍在快速迭代，界面与默认值可能变化。<strong>遇到冲突时以官方文档和 <code>--dump-config</code> 的实际输出为准</strong>，本书的价值在于帮你建立判断框架，而不是替代 changelog。</p></div></div>
+<h2 id="c0-s3">全书地图<a class="anchor" href="#c0-s3" aria-label="本节链接">#</a></h2>
+<p>下表每一行都可以直接点击，跳到对应章节。章节顺序按“先能跑、再能改、最后能用于研究”排列。</p>
+<div class="chapmap">
+<a href="#chapter-1"><b>1</b><span>简介</span><i>模型负责想，Harness 负责做</i></a>
+<a href="#chapter-2"><b>2</b><span>安装、使用</span><i>四条安装路线，先选人再选路</i></a>
+<a href="#chapter-3"><b>3</b><span>桌面版</span><i>工作区 + 访问模式，是安全的第一道闸</i></a>
+<a href="#chapter-4"><b>4</b><span>模型配置</span><i>凭据只写、Provider ID 永久</i></a>
+<a href="#chapter-5"><b>5</b><span>运行模式</span><i>模式 = 一组预设插件</i></a>
+<a href="#chapter-6"><b>6</b><span>插件加载、安装</span><i>没有 insert: 就等于没写</i></a>
+<a href="#chapter-7"><b>7</b><span>插件使用、发布</span><i>构建产物决定用户要不要授权</i></a>
+<a href="#chapter-8"><b>8</b><span>Stata-Kernel-Jupyter</span><i>轻量执行通道，能跑就行</i></a>
+<a href="#chapter-9"><b>9</b><span>AIStata MCP</span><i>结构化结果通道，23 个工具</i></a>
+<a href="#chapter-10"><b>10</b><span>论文复现专题</span><i>可审计，才是可复现的前提</i></a>
+</div>
+
+<h2 id="c0-s4">学习路径<a class="anchor" href="#c0-s4" aria-label="本节链接">#</a></h2>
+<p>按照以下路径学习，可在一至两周内从零跑通 DeepSeek Harness 并进入插件定制阶段：</p>
+<p><strong>安装 → Web UI 使用 → 桌面版 → 模型配置 → 运行模式 → 插件开发与发布 → Stata 实战</strong></p>
+<p>如何使用本站：</p>
+<ul>
+<li><strong>初学者</strong>：从第 1 章开始按顺序读，桌面版用户可以跳过第 2 章的启动命令；</li>
+<li><strong>有基础者</strong>：用左侧搜索框定位到感兴趣的章节；</li>
+<li><strong>开发者</strong>：重点读第 5—7 章，掌握运行模式与插件开发、分发的完整链路；</li>
+<li><strong>只想跑计量</strong>：第 2 章装好桌面版 → 第 6 章看 <code>insert:</code> 挂载 → 第 8—10 章。</li>
+</ul>
+<h2 id="c0-s5">环境约定<a class="anchor" href="#c0-s5" aria-label="本节链接">#</a></h2>
+<p>本书实战部分在下列环境验证，你的版本号可以不同，但大版本别差太远：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">项目</th>
+<th style="text-align: left;">本书环境</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">操作系统</td>
+<td style="text-align: left;">Windows 11 x64</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stata</td>
+<td style="text-align: left;">StataMP 18（pystata 驱动）</td>
+</tr>
+<tr>
+<td style="text-align: left;">DeepSeek Harness</td>
+<td style="text-align: left;">桌面版 0.2.x</td>
+</tr>
+<tr>
+<td style="text-align: left;">MCP 通道</td>
+<td style="text-align: left;">AIStata MCP（23 工具）、Stata-Kernel-Jupyter MCP（3 工具）</td>
+</tr>
+<tr>
+<td style="text-align: left;">写作与编译</td>
+<td style="text-align: left;">VS Code + Quarto</td>
+</tr>
+</tbody>
+</table></div>
+<p>macOS 的差异主要在路径：<code>~/.dsh/</code> 对应 Windows 的 <code>%USERPROFILE%\.dsh\</code>，其它配置字段一致。</p>
+<h2 id="c0-s6">排版约定<a class="anchor" href="#c0-s6" aria-label="本节链接">#</a></h2>
+<ul>
+<li>行内代码表示命令、字段、文件名，例如 <code>cordis.patch.yml</code>、<code>transport: stdio</code>；</li>
+<li>代码块首行若写 <code># 文件路径：...</code>，表示这段内容应该写进哪个文件，不要直接执行；</li>
+<li><code>&lt;PYTHON&gt;</code>、<code>&lt;LAUNCHER&gt;</code> 这类尖括号是占位符，必须替换成你机器上的真实值；</li>
+<li>四种提示框的分工：<strong>说明</strong>（背景知识）、<strong>技巧</strong>（省时间的做法）、<strong>注意</strong>（容易忽略的细节）、<strong>重要</strong>（做错会静默失败或造成损失）。</li>
+</ul>
+<h2 id="c0-s7">读完之后你应该能做到<a class="anchor" href="#c0-s7" aria-label="本节链接">#</a></h2>
+<ul>
+<li>看到一段 <code>cordis.patch.yml</code>，能判断它会不会生效、为什么；</li>
+<li>模型说“我没有这个工具”时，能按层定位是进程、配置还是会话快照的问题；</li>
+<li>能给自己的课题组搭一套“对话式 Stata + 论文复现”的工作台，并留下可审计的记录。</li>
+</ul>
+<p>如果读完之后你只记住了上面这三条，这本书就算写成了。</p>
+<h2 id="c0-s8">关于本书与相关资源<a class="anchor" href="#c0-s8" aria-label="本节链接">#</a></h2>
+<p>本书是「数量经济学」微信公众号 2026 年 11 月—2027 年 1 月系列公开课的配套资料，逐章重写并持续更新。</p>
+<ul>
+<li><strong>本书仓库</strong>：<a href="https://github.com/AIStata/deepseek-harness-metrics" target="_blank" rel="noopener">github.com/AIStata/deepseek-harness-metrics</a>（章节 Markdown、构建脚本与勘误都放在这里）</li>
+<li><strong>最新公开课</strong>：<a href="https://www.aistata.cn/2025AI.html" target="_blank" rel="noopener">aistata.cn/2025AI.html</a></li>
+<li><strong>系列专题课</strong>：<a href="https://mp.weixin.qq.com/s/LiqQKxHdMilu9FrWnQ5wQg" target="_blank" rel="noopener">2027 年 AIStata MCP + Workbuddy + Claude 等智能体 + Stata 学术应用专题课</a></li>
+<li><strong>AIStata MCP 主页</strong>：<a href="https://github.com/AIStata/AIStata-for-StataMCP" target="_blank" rel="noopener">github.com/AIStata/AIStata-for-StataMCP</a></li>
+<li><strong>Stata-Kernel-Jupyter 主页</strong>：<a href="https://github.com/AIStata/Stata-Kernel-Jupyter" target="_blank" rel="noopener">github.com/AIStata/Stata-Kernel-Jupyter</a></li>
+</ul>
+<p>全部资源入口汇总在第 11 章「关于公开课、文件与资源链接」，后续如有新增会先在那里更新。</p>
+<div class="pager"><a class="disabled"></a><a class="next" href="#chapter-1"><div class="pg-label">下一章 →</div><div class="pg-title">简介</div></a></div>
+</section>
+<section class="chapter" id="chapter-1">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>基础篇</div>
+    <h1 class="ch-title">第 1 章 简介</h1>
+    <p class="ch-sub">模型负责想，Harness 负责做</p>
+    <div class="ch-meta">
+      <span>📖 第 1 章</span>
+      <span>⏱ 约 7 分钟</span>
+      <span>🔖 2,909 字</span>
+    </div>
+  </div>
+  <h2 id="c1-s1">本章要解决的问题<a class="anchor" href="#c1-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>为什么“能对话的模型”还需要一层 Harness？</li>
+<li>“一切皆插件”到底改变了什么？</li>
+<li>它适合谁、不适合谁？</li>
+</ul>
+<h2 id="c1-s2">1.1 从“会说话”到“会做事”<a class="anchor" href="#c1-s2" aria-label="本节链接">#</a></h2>
+<p>大模型本身只会做一件事：根据上下文预测下一段文字。它能告诉你“这段 Stata 代码应该用 <code>reghdfe</code>”，但它没法自己打开你的 <code>.do</code> 文件、跑一遍、看到 <code>r(198)</code> 之后再改。</p>
+<p>把这件事补齐的中间层，就叫 <strong>Agent Harness（智能体框架）</strong>。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用户目标
+   │
+   ▼
+┌─────────────┐     &quot;该做什么、先做哪步&quot;
+│   Model     │ ──────────────────┐
+└─────────────┘                   │
+   ▲                              ▼
+   │ 结果/报错/文件内容      ┌─────────────┐
+   └────────────────────────│  Harness    │
+                            │ 读文件 跑命令 │
+                            │ 调工具 管会话 │
+                            └─────────────┘
+</code></pre></div>
+<p>用一句更直白的话概括：</p>
+<blockquote>
+<p><strong>模型负责“想”，Harness 负责“做”。</strong></p>
+</blockquote>
+<p>同一个模型，配上不同的 Harness，能力边界完全不同。这也解释了一个常见困惑：为什么同样的模型，在网页版里只能聊天，在本地客户端里却能改你的代码、跑你的脚本——差别不在模型，在 Harness 给了它哪些工具、哪些权限。</p>
+<h2 id="c1-s3">1.2 DeepSeek Harness 是什么<a class="anchor" href="#c1-s3" aria-label="本节链接">#</a></h2>
+<p>DeepSeek Harness 是深度求索开源的智能体框架，MIT 许可证，TypeScript 编写，命令行入口是 <code>dsh</code>。它的核心设计只有一句话：</p>
+<blockquote>
+<p><strong>Everything is a Plugin.（一切皆插件）</strong></p>
+</blockquote>
+<p>模型接入、工具、技能、会话管理、沙箱、存储、调度，甚至界面，全都是由插件拼出来的。内核（Cordis）只做三件事：加载插件、卸载插件、管理插件之间的依赖。</p>
+<p>这带来一个很实际的好处：<strong>你不需要改源码，就能在配置层换掉自己不满意的那一部分</strong>。比如：</p>
+<ul>
+<li>不想用内置的文件编辑工具？换一个插件替代；</li>
+<li>公司要求所有请求走内部网关？加一个自定义模型提供方；</li>
+<li>想让 AI 能跑 Stata？挂一个 MCP 客户端插件，把 Stata 包装成工具。</li>
+</ul>
+<div class="callout tip"><div class="co-body"><p>把 Harness 想成一台<strong>可换零件的相机</strong>：机身（内核）负责快门和卡口，镜头（模型）、取景器（界面）、存储卡（会话日志）都能换。多数框架是“整机”，DeepSeek Harness 是“卡口标准”。</p></div></div>
+<h2 id="c1-s4">1.3 三个必须分清的概念<a class="anchor" href="#c1-s4" aria-label="本节链接">#</a></h2>
+<p>初学者 90% 的困惑来自把这三个词混着用。先把它们摆清楚：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">概念</th>
+<th style="text-align: left;">回答的问题</th>
+<th style="text-align: left;">举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Profile（配置档）</strong></td>
+<td style="text-align: left;">这次启动，加载哪一整套应用配置？</td>
+<td style="text-align: left;"><code>web</code>、<code>headless</code>、<code>desktop</code>、<code>sdk</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Agent 预设（模式）</strong></td>
+<td style="text-align: left;">这个会话里，模型能用哪些工具、按什么方式工作？</td>
+<td style="text-align: left;">标准模式、PTC 模式、极简模式、创作者模式</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>插件（Plugin）</strong></td>
+<td style="text-align: left;">具体某项能力由谁提供？</td>
+<td style="text-align: left;">MCP 客户端、模型适配器、界面面板</td>
+</tr>
+</tbody>
+</table></div>
+<p>三者的关系是嵌套的：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">Profile（启动哪套配置）
+   └── 插件组合（由 cordis.patch.yml 决定）
+          └── Agent 预设（会话里选哪组工具）
+                 └── 一次具体任务
+</code></pre></div>
+<p><strong>这解释了一个高频故障</strong>：你用命令行给 <code>web</code> 这个 profile 装了插件，桌面版却看不到——因为桌面版用的是 <code>desktop</code> 这个 profile，两者互不相通（详见第 6、7 章）。</p>
+<h2 id="c1-s5">1.4 核心能力地图<a class="anchor" href="#c1-s5" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">能力</th>
+<th style="text-align: left;">具体表现</th>
+<th style="text-align: left;">对使用者意味着什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">一切皆插件</td>
+<td style="text-align: left;">Cordis 内核 + 配置层组合</td>
+<td style="text-align: left;">能力可替换、可裁剪、可自己写</td>
+</tr>
+<tr>
+<td style="text-align: left;">运行可追溯</td>
+<td style="text-align: left;">模型看到的内容写入仅追加会话日志，Trajectory 视图可按来源查看</td>
+<td style="text-align: left;">出问题能回放，复现过程可审计</td>
+</tr>
+<tr>
+<td style="text-align: left;">四种运行模式</td>
+<td style="text-align: left;">标准 / PTC / 极简 / 创作者</td>
+<td style="text-align: left;">不同任务用不同“工作台”</td>
+</tr>
+<tr>
+<td style="text-align: left;">多形态入口</td>
+<td style="text-align: left;">桌面版、Web UI、headless、CLI、Python/TS SDK</td>
+<td style="text-align: left;">手动用、脚本用、嵌入系统用都行</td>
+</tr>
+<tr>
+<td style="text-align: left;">模型无关</td>
+<td style="text-align: left;">DeepSeek 官方 + 目录提供方 + 自定义 OpenAI 兼容端点</td>
+<td style="text-align: left;">不被单一厂商锁定</td>
+</tr>
+<tr>
+<td style="text-align: left;">配置可导出</td>
+<td style="text-align: left;"><code>dsh --profile web --dump-config</code></td>
+<td style="text-align: left;">环境可以存档、可以交给别人重建</td>
+</tr>
+</tbody>
+</table></div>
+<p>其中“运行可追溯”最容易被低估。多数 Agent 工具只给你最终答案，DeepSeek Harness 会把<strong>模型每一步看到了什么、调了什么工具、拿到了什么返回</strong>都记下来。对做实证研究的人来说，这不是调试功能，而是<strong>研究记录</strong>——第 10 章会把它变成复现报告的一部分。</p>
+<h2 id="c1-s6">1.5 核心特性清单<a class="anchor" href="#c1-s6" aria-label="本节链接">#</a></h2>
+<ul>
+<li><strong>一切皆插件</strong>：Cordis 内核只负责插件的加载、卸载与依赖管理；所有能力均由插件提供，配置层自由组合。</li>
+<li><strong>运行有迹可循</strong>：模型看到的一切都写入仅追加设计的会话日志；Trajectory 视图按来源查看，恢复、分叉、检索与回放共享同一份事件流。</li>
+<li><strong>多种运行模式</strong>：标准模式、PTC 模式、极简模式、创造模式。</li>
+<li><strong>多形态使用</strong>：Web UI（默认 <code>http://127.0.0.1:3080</code>）、桌面版、headless、CLI、Python SDK、TypeScript SDK。</li>
+<li><strong>工具与扩展丰富</strong>：文件编辑、Shell、检索、Skills、计划、目标、子代理、工作流；任何能力都可被 patch 替换。</li>
+<li><strong>开放可控</strong>：MIT 开源；Profile + 组合包分层叠加配置，<code>dsh --profile web --dump-config</code> 可查看完整配置树。</li>
+<li><strong>模型无关</strong>：填入 DeepSeek API 密钥即可用，支持其他提供方与自定义 OpenAI 兼容端点，模型路由无需重启。</li>
+<li><strong>研究就绪</strong>：完整可观测的事件流与配置树，底层 Cordis 有学术论文支撑。</li>
+</ul>
+<h2 id="c1-s7">1.6 它适合谁，不适合谁<a class="anchor" href="#c1-s7" aria-label="本节链接">#</a></h2>
+<p><strong>适合：</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">人群</th>
+<th style="text-align: left;">具体收益</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">开发者</td>
+<td style="text-align: left;">本地 AI 编码助手，能力边界自己定，不被黑盒限制</td>
+</tr>
+<tr>
+<td style="text-align: left;">研究者</td>
+<td style="text-align: left;">全流程留痕，可回放、可归档、可写进方法附录</td>
+</tr>
+<tr>
+<td style="text-align: left;">计量 / 统计用户</td>
+<td style="text-align: left;">通过 MCP 接 Stata，把“跑回归”变成对话式操作</td>
+</tr>
+<tr>
+<td style="text-align: left;">工具折腾爱好者</td>
+<td style="text-align: left;">插件系统本身就是可玩的东西</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>不太适合（至少现在）：</strong></p>
+<ul>
+<li><strong>想零配置开箱即用的人</strong>：桌面版已经简单很多，但涉及 MCP、插件时仍要改 YAML；</li>
+<li><strong>不能接受预览版波动的人</strong>：项目仍标注为预览阶段，破坏性更新是可能的，重要环境请固定版本；</li>
+<li><strong>需要企业级权限审计的团队</strong>：个人版的能力边界清晰，但组织级管控要自己设计。</li>
+</ul>
+<div class="callout warning"><div class="co-body"><p><strong>别把它当“更聪明的聊天框”。</strong> 它真正的价值在于“能动手”——而“能动手”同时意味着“能搞坏东西”。第 3 章的访问模式、第 10 章的只读原则，都是为此准备的。</p></div></div>
+<h2 id="c1-s8">1.7 与常见工具的差别（个人判断）<a class="anchor" href="#c1-s8" aria-label="本节链接">#</a></h2>
+<p>以下是比较主观的观察，供你选型时参考：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">维度</th>
+<th style="text-align: left;">IDE 内置 Agent</th>
+<th style="text-align: left;">命令行 Agent</th>
+<th style="text-align: left;">DeepSeek Harness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">上手成本</td>
+<td style="text-align: left;">最低</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">中偏高</td>
+</tr>
+<tr>
+<td style="text-align: left;">可替换性</td>
+<td style="text-align: left;">低（绑定 IDE）</td>
+<td style="text-align: left;">中</td>
+<td style="text-align: left;">高（连界面都能换）</td>
+</tr>
+<tr>
+<td style="text-align: left;">可审计性</td>
+<td style="text-align: left;">一般</td>
+<td style="text-align: left;">一般</td>
+<td style="text-align: left;">强（仅追加日志 + 配置树导出）</td>
+</tr>
+<tr>
+<td style="text-align: left;">扩展方式</td>
+<td style="text-align: left;">插件市场为主</td>
+<td style="text-align: left;">自定义脚本</td>
+<td style="text-align: left;">插件 + MCP + 配置补丁</td>
+</tr>
+<tr>
+<td style="text-align: left;">适合场景</td>
+<td style="text-align: left;">日常编码</td>
+<td style="text-align: left;">自动化脚本</td>
+<td style="text-align: left;">需要定制与留痕的长期工作流</td>
+</tr>
+</tbody>
+</table></div>
+<p>一句话：<strong>如果你只需要“帮我改这段代码”，不必上 Harness；如果你想要一个“能被改造、能被审计、能被复现”的工作台，它值得花时间。</strong></p>
+<h2 id="c1-s9">1.8 阅读前需要具备的基础<a class="anchor" href="#c1-s9" aria-label="本节链接">#</a></h2>
+<p>本书<strong>不要求</strong> AI 研究背景或深度机器学习知识：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">能力</th>
+<th style="text-align: left;">要求程度</th>
+<th style="text-align: left;">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">命令行基础操作</td>
+<td style="text-align: left;">Web / 开发路线需要</td>
+<td style="text-align: left;">桌面版入门不要求命令行</td>
+</tr>
+<tr>
+<td style="text-align: left;">Node.js 基础</td>
+<td style="text-align: left;">npm / 源码路线需要</td>
+<td style="text-align: left;">要求 Node.js 24.9 或更高版本</td>
+</tr>
+<tr>
+<td style="text-align: left;">基本 API 概念</td>
+<td style="text-align: left;">了解即可</td>
+<td style="text-align: left;">知道什么是 API Key、如何申请 DeepSeek API Key</td>
+</tr>
+<tr>
+<td style="text-align: left;">插件 / 配置文件概念</td>
+<td style="text-align: left;">了解即可</td>
+<td style="text-align: left;">进阶章节会用到</td>
+</tr>
+<tr>
+<td style="text-align: left;">Git 基础</td>
+<td style="text-align: left;">可选</td>
+<td style="text-align: left;">从源码安装、参与贡献时会用到</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>操作系统要求</strong>：Linux、macOS 或 Windows 安装 Node.js 后即可运行；桌面版提供 Windows 64 位与 macOS Apple 芯片安装包。</p>
+</blockquote>
+<h2 id="c1-s10">本章速记<a class="anchor" href="#c1-s10" aria-label="本节链接">#</a></h2>
+<ol>
+<li><strong>Agent = Model + Harness</strong>：模型负责推理，Harness 负责执行与边界。</li>
+<li><strong>一切皆插件</strong>：内核只管加载，能力全靠组合，所以“改配置”比“改源码”更常用。</li>
+<li><strong>Profile ≠ 模式 ≠ 插件</strong>：启动配置、会话工具集、单项能力，三个层次不要混。</li>
+<li><strong>可审计是它的差异化优势</strong>：仅追加日志 + 配置树导出，让“AI 做过什么”有据可查。</li>
+</ol>
+<div class="pager"><a class="prev" href="#chapter-0"><div class="pg-label">← 上一章</div><div class="pg-title">前言</div></a><a class="next" href="#chapter-2"><div class="pg-label">下一章 →</div><div class="pg-title">安装、使用</div></a></div>
+</section>
+<section class="chapter" id="chapter-2">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>基础篇</div>
+    <h1 class="ch-title">第 2 章 安装、使用</h1>
+    <p class="ch-sub">四条路线、首次配置与验收清单</p>
+    <div class="ch-meta">
+      <span>📖 第 2 章</span>
+      <span>⏱ 约 10 分钟</span>
+      <span>🔖 4,114 字</span>
+    </div>
+  </div>
+  <p>本章介绍 DeepSeek Harness 的四种安装方式：桌面版、npm、源码安装与 Python SDK。普通用户优先使用官网桌面版；希望通过浏览器访问本地 Web UI 的开发者可以选择 npm。</p>
+<h2 id="c2-s1">本章要解决的问题<a class="anchor" href="#c2-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>四种安装方式，我该选哪一个？</li>
+<li>装完之后，怎么判断“真的能用了”？</li>
+<li>打不开页面、输入框灰着、模型报错，先查什么？</li>
+</ul>
+<h2 id="c2-s2">2.1 先选人，再选路<a class="anchor" href="#c2-s2" aria-label="本节链接">#</a></h2>
+<p>安装方式没有优劣，只有匹配。先回答一个问题：<strong>你主要想用它干什么？</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你的情况</th>
+<th style="text-align: left;">推荐路线</th>
+<th style="text-align: left;">理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">只想用起来，不想碰命令行</td>
+<td style="text-align: left;">官方桌面版</td>
+<td style="text-align: left;">装完即用，自带运行时</td>
+</tr>
+<tr>
+<td style="text-align: left;">想用浏览器访问本地界面</td>
+<td style="text-align: left;">npm + Web UI</td>
+<td style="text-align: left;">启动快，日志直接看终端</td>
+</tr>
+<tr>
+<td style="text-align: left;">要读源码、写插件、提 PR</td>
+<td style="text-align: left;">源码安装</td>
+<td style="text-align: left;">能改、能调、能 build</td>
+</tr>
+<tr>
+<td style="text-align: left;">要把 Agent 嵌进 Python 系统</td>
+<td style="text-align: left;">Python SDK</td>
+<td style="text-align: left;">进程内调用，无需系统 Node</td>
+</tr>
+</tbody>
+</table></div>
+<p>四条路线的硬性门槛放在一起对比：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">安装方式</th>
+<th style="text-align: left;">操作系统</th>
+<th style="text-align: left;">是否需要 Node.js</th>
+<th style="text-align: left;">适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>官方桌面版</strong>（新手推荐）</td>
+<td style="text-align: left;">Windows 64 位、macOS Apple 芯片</td>
+<td style="text-align: left;">不需要单独安装</td>
+<td style="text-align: left;">日常办公、文件处理、AI 编程</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>npm 安装</strong></td>
+<td style="text-align: left;">Windows、macOS、Linux</td>
+<td style="text-align: left;">需要（24.9+）</td>
+<td style="text-align: left;">命令行启动本地 Web UI</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>源码安装</strong></td>
+<td style="text-align: left;">支持 Git 的开发环境</td>
+<td style="text-align: left;">需要（24.9+）</td>
+<td style="text-align: left;">研究源码、开发插件和调试</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Python SDK</strong></td>
+<td style="text-align: left;">Linux x64/arm64、macOS 14+（Apple 芯片）、Windows x64</td>
+<td style="text-align: left;">不需要（自带运行时）</td>
+<td style="text-align: left;">通过 Python 集成 Agent</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout note"><div class="co-body"><p>官网目前将 Harness 标注为预览版，具体界面与安装包可能变化。桌面版与 npm/Web UI 是同一产品的不同使用入口，<strong>不要把第三方社区桌面封装与官网安装包混淆</strong>。</p></div></div>
+<h2 id="c2-s3">2.2 安装前准备<a class="anchor" href="#c2-s3" aria-label="本节链接">#</a></h2>
+<ul>
+<li><strong>桌面版</strong>：macOS 需要 Apple 芯片（M 系列）及 macOS 13+；Windows 提供 64 位版本。</li>
+<li><strong>npm / 源码</strong>：需要 Node.js 24.9+（旧版 Node 22 已不再支持）；源码方式还要 Git 和 pnpm（仓库通过 Corepack 固定 pnpm 版本，可用 <code>corepack enable</code> 启用）。</li>
+<li><strong>Python SDK</strong>：Python 3.10+，运行时自带，无需系统 Node.js。</li>
+<li><strong>模型配置</strong>：准备 DeepSeek API Key（<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com/api_keys</a>）。<strong>不要把 API Key 写进公开代码或提交到 Git 仓库。</strong></li>
+</ul>
+<h2 id="c2-s4">2.3 方式一：官方桌面版（推荐）<a class="anchor" href="#c2-s4" aria-label="本节链接">#</a></h2>
+<p>官方页面：<code>https://www.deepseek.com/harness/</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">平台</th>
+<th style="text-align: left;">系统要求</th>
+<th style="text-align: left;">安装包</th>
+<th style="text-align: left;">安装方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">macOS</td>
+<td style="text-align: left;">Apple 芯片，macOS 13+</td>
+<td style="text-align: left;"><code>.dmg</code></td>
+<td style="text-align: left;">打开 DMG，将应用拖入“应用程序”</td>
+</tr>
+<tr>
+<td style="text-align: left;">Windows</td>
+<td style="text-align: left;">64 位</td>
+<td style="text-align: left;"><code>.exe</code></td>
+<td style="text-align: left;">双击安装程序，按向导完成</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Windows 桌面版安装</h3>
+<ol>
+<li>进入 Harness 官网，选择 <strong>Windows（64 位）</strong>，下载 EXE 安装程序；</li>
+<li>双击运行安装包，按安装向导完成安装；</li>
+<li>从开始菜单启动 DeepSeek Harness。</li>
+</ol>
+<p>如果 Windows 出现安全提示，请先确认文件来自 <code>download.deepseek.com</code> 官方下载地址。若出现 SmartScreen 提示，先核对文件来源域名，再选择“更多信息 → 仍要运行”。</p>
+<h3>macOS 桌面版安装</h3>
+<ol>
+<li>进入 Harness 官网，选择 <strong>macOS（Apple 芯片）</strong>，等待 DMG 文件下载完成；</li>
+<li>双击打开 DMG，把 DeepSeek Harness 拖到<strong>应用程序</strong>文件夹；</li>
+<li>从“启动台”或“应用程序”目录启动。</li>
+</ol>
+<p>如果系统提示无法打开，应先核实安装包来源和开发者签名，再查看“系统设置 → 隐私与安全性”的相关提示。<strong>不要为了安装而直接关闭系统的全局安全防护。</strong></p>
+<p>Intel 芯片 Mac 当前不在官网明确提供的桌面下载范围内，建议使用 npm / Web UI 方式。</p>
+<h3>首次打开桌面版的三件事</h3>
+<ol>
+<li><strong>配置模型</strong>：打开模型设置，配置服务商和凭据；</li>
+<li><strong>选择工作区</strong>：选一个专门用于测试的文件夹（不要选生产目录或含隐私资料的文件夹）；</li>
+<li><strong>创建第一条会话</strong>，输入任务测试。</li>
+</ol>
+<p>按顺序做，不要跳：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">顺序</th>
+<th style="text-align: left;">动作</th>
+<th style="text-align: left;">判断成功的标志</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">左下角账号菜单 → 设置 → 模型，填入 API Key</td>
+<td style="text-align: left;">模型列表出现可用模型</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">添加并<strong>选中</strong>工作区目录</td>
+<td style="text-align: left;">输入框从禁用变为可用</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">发一条只读指令</td>
+<td style="text-align: left;">有回复，且工具调用记录里能看到读取的文件</td>
+</tr>
+</tbody>
+</table></div>
+<p>第三条指令可以照抄：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">请阅读当前工作区内的所有文件名和 README（如果有），
+用 5 行以内说明这个目录是做什么的。
+本轮只允许读取，不要创建、修改或删除任何文件。
+</code></pre></div>
+<h2 id="c2-s5">2.4 方式二：npm 安装并启动 Web UI<a class="anchor" href="#c2-s5" aria-label="本节链接">#</a></h2>
+<p>使用 npm 命令全局安装：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">npm install -g @deepseek-ai/dsh
+</code></pre></div>
+<p>这种方式装完后期方便使用 <code>dsh</code> 命令。安装完成后，输入以下命令启动：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">dsh web
+</code></pre></div>
+<p>也可以使用 npx 快速体验（无需全局安装）：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">npx @deepseek-ai/dsh web
+</code></pre></div>
+<p>首次运行会自动初始化 <code>web</code> 配置模板，然后打印访问地址——<strong>默认是 <code>http://127.0.0.1:3080</code></strong>。在浏览器打开看到 Web 界面即安装成功。</p>
+<div class="callout tip"><div class="co-body"><p><code>dsh</code> 会把<strong>调用目录</strong>作为默认文件系统位置。建议先 <code>cd</code> 到你的项目目录，再执行 <code>npx @deepseek-ai/dsh web</code>，这样后续选择工作区最方便。</p></div></div>
+<h2 id="c2-s6">2.5 方式三：从源码安装<a class="anchor" href="#c2-s6" aria-label="本节链接">#</a></h2>
+<p>适合开发插件、阅读源码或参与贡献：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">git clone https://github.com/deepseek-ai/deepseek-harness.git
+cd deepseek-harness
+pnpm install     # 安装依赖（需 pnpm，可 corepack enable 启用）
+pnpm run build   # 构建包与前端产物
+pnpm dsh web     # 以源码方式启动 Web UI
+</code></pre></div>
+<p>其他入口：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">pnpm dsh --profile headless &quot;run the tests&quot;      # 一次性运行任务并打印答案
+pnpm dsh --profile web --dump-config             # 查看实际启动的完整配置树
+</code></pre></div>
+<blockquote>
+<p>源码开发要求 Node.js 24.9+、Corepack 启用的 pnpm（仓库固定 11.28.5）与 Git 2.26+。</p>
+</blockquote>
+<h2 id="c2-s7">2.6 方式四：Python SDK<a class="anchor" href="#c2-s7" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">git clone https://github.com/deepseek-ai/deepseek-harness.git
+cd deepseek-harness
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install deepseek-harness-sdk
+</code></pre></div>
+<p>设置凭据后即可在 Python 程序中调用（SDK 自带运行时，<strong>不需要系统 Node.js</strong>）：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">export DEEPSEEK_API_KEY=sk-your-key-here
+# 若使用 OpenAI 兼容代理端点，还需：
+# export DEEPSEEK_BASE_URL=http://127.0.0.1:8000/v1
+</code></pre></div>
+<div class="code-card"><div class="code-head"><span class="code-lang">python</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-python">from deepseek_harness import DeepSeekHarness
+# 参考仓库内置 python/sdk/examples/minimal.py
+</code></pre></div>
+<p>运行后会在指定的 dsh home 下收到包含模型请求与工具调用的 JSONL 会话日志。</p>
+<h2 id="c2-s8">2.7 首次使用三步走<a class="anchor" href="#c2-s8" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">步骤</th>
+<th style="text-align: left;">操作</th>
+<th style="text-align: left;">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1 配置模型</td>
+<td style="text-align: left;">设置 → 模型</td>
+<td style="text-align: left;">输入 DeepSeek API 密钥并保存；模型路由<strong>立即可用，无需重启</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">2 选择工作区</td>
+<td style="text-align: left;">点击“选择工作区”</td>
+<td style="text-align: left;">添加并选中项目目录；<strong>选中前会话输入框不可用</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">3 运行任务</td>
+<td style="text-align: left;">在会话中输入指令</td>
+<td style="text-align: left;">例如 <code>Summarize this repository and identify its main packages.</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>第一个任务建议从轻量只读指令开始——先让 agent 熟悉工作区，再逐步交付真实任务。</p>
+<h2 id="c2-s9">2.8 常用命令速查<a class="anchor" href="#c2-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">命令</th>
+<th style="text-align: left;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>npx @deepseek-ai/dsh web</code></td>
+<td style="text-align: left;">启动 Web UI（等价于 <code>--profile web</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsh --profile headless "任务描述"</code></td>
+<td style="text-align: left;">一次性运行任务，打印最终答案后退出（适合脚本/CI）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsh plugin --profile &lt;name&gt;</code></td>
+<td style="text-align: left;">管理某个 profile 的插件</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsh --profile web --dump-config</code></td>
+<td style="text-align: left;">查看实际启动的完整配置树</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsh --profile web --dump-default-config</code></td>
+<td style="text-align: left;">查看默认配置树（不含用户 patch）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsh --profile &lt;name&gt; --from-default-profile &lt;模板&gt;</code></td>
+<td style="text-align: left;">用随附模板重建自定义 profile（会删除同名 profile 后重建）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pip install deepseek-harness-sdk</code></td>
+<td style="text-align: left;">安装 Python SDK</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout warning"><div class="co-body"><p><strong>关于参数顺序</strong>：dsh 的启动参数在前，应用参数在后。<code>dsh plugin</code> 只在转发 pnpm 参数之前读取 <code>--profile</code>，正确写法是 <code>dsh plugin --profile web add &lt;包名&gt;</code>——把 <code>--profile</code> 放在 <code>add</code> 之后会报错。</p></div></div>
+<h2 id="c2-s10">2.9 桌面版与 Web UI 的区别<a class="anchor" href="#c2-s10" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">对比项</th>
+<th style="text-align: left;">官方桌面版</th>
+<th style="text-align: left;">npm / Web UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">打开方式</td>
+<td style="text-align: left;">本地应用窗口</td>
+<td style="text-align: left;">命令启动后用浏览器</td>
+</tr>
+<tr>
+<td style="text-align: left;">Node.js</td>
+<td style="text-align: left;">无需单独安装</td>
+<td style="text-align: left;">需要安装（24.9+）</td>
+</tr>
+<tr>
+<td style="text-align: left;">使用门槛</td>
+<td style="text-align: left;">适合普通用户</td>
+<td style="text-align: left;">适合开发者及自定义部署</td>
+</tr>
+<tr>
+<td style="text-align: left;">后台执行</td>
+<td style="text-align: left;">官网强调支持后台任务</td>
+<td style="text-align: left;">依赖 Web 服务进程及部署配置</td>
+</tr>
+<tr>
+<td style="text-align: left;">插件与开发</td>
+<td style="text-align: left;">提供插件入口</td>
+<td style="text-align: left;">更容易查看终端日志和项目源码</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c2-s11">2.10 常见问题与排错<a class="anchor" href="#c2-s11" aria-label="本节链接">#</a></h2>
+<h3>问题 1：浏览器打不开 http://127.0.0.1:3080</h3>
+<p>确认终端里 dsh 进程仍在运行且没有报错；端口被占用可换端口：<code>dsh --profile web --port 8080</code>（<code>--port 0</code> 让系统自动选择空闲端口）；检查防火墙是否放行本地端口。注意 Web 监听地址只接受具体的本机 IPv4/IPv6 地址，不接受通配地址。</p>
+<h3>问题 2：npx 找不到 @deepseek-ai/dsh 或版本过旧</h3>
+<p>确认 Node.js ≥ 24.9（<code>node -v</code>）；项目迭代很快，先用 <code>npx @deepseek-ai/dsh@latest --version</code> 核对实际版本。</p>
+<h3>问题 3：源码安装时 pnpm install / build 失败</h3>
+<p>确认已 <code>corepack enable</code>（仓库固定 pnpm 11.28.5）；网络受限可为 npm/pnpm 配置镜像源；确认 Node.js 版本满足 24.9+。</p>
+<h3>问题 4：会话输入框不可用 / agent 无法读写文件</h3>
+<p>最常见原因是<strong>没有选择工作区</strong>——回到“选择工作区”添加并选中项目目录；确认已在“设置 → 模型”保存有效 API 密钥。</p>
+<h3>问题 5：Python SDK 运行时找不到 Node.js</h3>
+<p>SDK 自带运行时，正常不需要系统 Node.js；确认安装的是完整包 <code>python -m pip install deepseek-harness-sdk</code>，并核对平台要求（Linux x64/arm64、macOS 14+ arm64、Windows x64）。</p>
+<h2 id="c2-s12">附录 A：安装过程界面截图<a class="anchor" href="#c2-s12" aria-label="本节链接">#</a></h2>
+<p>下面这组截图是 Windows 桌面版从下载到进入主界面的完整过程，按“安装 → 登录 → 初始设置 → 页面认识”四步排列。</p>
+<p><strong>第 1 步：下载并安装</strong></p>
+<div class="figgrid">
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%871.PNG" alt="打开官网下载页，选择 Windows 64 位安装包"><figcaption>图 2-1　官网下载页：选择 Windows（64 位）安装包</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%872.PNG" alt="运行安装程序，按向导完成安装"><figcaption>图 2-2　运行 EXE，按安装向导下一步完成安装</figcaption></figure>
+</div>
+
+<p><strong>第 2 步：登录</strong></p>
+<p>首次启动会跳转到浏览器，选择手机号登录即可。</p>
+<div class="figgrid">
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%873.PNG" alt="启动后跳转到登录页"><figcaption>图 2-3　启动后自动跳转到账号登录页</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%874.PNG" alt="选择手机号登录方式"><figcaption>图 2-4　选择手机号登录，完成验证</figcaption></figure>
+</div>
+
+<p><strong>第 3 步：初始设置</strong></p>
+<p>登录后进入引导，依次完成模型凭据、工作区与首次会话。</p>
+<div class="figgrid">
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%875.PNG" alt="进入初始设置引导页"><figcaption>图 2-5　进入初始设置引导</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%876.PNG" alt="选择模型提供方"><figcaption>图 2-6　选择模型提供方</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%877.PNG" alt="填入 API Key 并保存"><figcaption>图 2-7　填入 API Key，保存后界面只显示脱敏信息</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%878.PNG" alt="选择工作区目录"><figcaption>图 2-8　选择工作区目录（建议先用测试目录）</figcaption></figure>
+</div>
+
+<p><strong>第 4 步：认识主界面</strong></p>
+<p>主界面主要分为三块：<strong>左侧导航、中央对话与任务区、任务执行和结果查看区域</strong>。</p>
+<figure class="fig-single"><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%879.PNG" alt="DeepSeek Harness 桌面版主界面"><figcaption>图 2-9　桌面版主界面：左导航、中会话、右结果</figcaption></figure>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">区域</th>
+<th style="text-align: left;">作用</th>
+<th style="text-align: left;">使用建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">新会话</td>
+<td style="text-align: left;">发起独立任务</td>
+<td style="text-align: left;">一个相对独立的目标使用一个会话</td>
+</tr>
+<tr>
+<td style="text-align: left;">工作区</td>
+<td style="text-align: left;">选择要处理的本地项目文件夹</td>
+<td style="text-align: left;">从测试目录开始</td>
+</tr>
+<tr>
+<td style="text-align: left;">会话区</td>
+<td style="text-align: left;">查看回答、执行步骤与输出结果</td>
+<td style="text-align: left;">检查工具做了什么，而不只看最终回答</td>
+</tr>
+<tr>
+<td style="text-align: left;">输入区</td>
+<td style="text-align: left;">填写任务、引用文件、指定要求</td>
+<td style="text-align: left;">说明目标、范围和禁止操作</td>
+</tr>
+<tr>
+<td style="text-align: left;">插件</td>
+<td style="text-align: left;">管理扩展和技能</td>
+<td style="text-align: left;">优先启用来源可信的插件</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout tip"><div class="co-body"><p>截图里的顺序就是推荐顺序：<strong>先登录、再配模型、最后选工作区</strong>。反过来做，最容易卡在“输入框是灰的”这一步——因为工作区没选中时，输入区本来就不接受输入。</p></div></div>
+<div class="pager"><a class="prev" href="#chapter-1"><div class="pg-label">← 上一章</div><div class="pg-title">简介</div></a><a class="next" href="#chapter-3"><div class="pg-label">下一章 →</div><div class="pg-title">桌面版</div></a></div>
+</section>
+<section class="chapter" id="chapter-3">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>基础篇</div>
+    <h1 class="ch-title">第 3 章 DeepSeek Harness 桌面版</h1>
+    <p class="ch-sub">工作区、访问模式与两次实战</p>
+    <div class="ch-meta">
+      <span>📖 第 3 章</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,458 字</span>
+    </div>
+  </div>
+  <h2 id="c3-s1">本章要解决的问题<a class="anchor" href="#c3-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>桌面版和网页版的本质区别是什么？</li>
+<li>“工作区”为什么是必选项，而不是可选项？</li>
+<li>第一次用它干活，怎么在不冒险的前提下摸清它的脾气？</li>
+</ul>
+<h2 id="c3-s2">3.1 桌面版到底是什么<a class="anchor" href="#c3-s2" aria-label="本节链接">#</a></h2>
+<p>很多人以为桌面版只是“把网页包了个壳”。实际不是。</p>
+<p>桌面版把三样东西打包在一起：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">┌──────────────────────────────────────────┐
+│  桌面应用                                 │
+│  ┌────────────┐  ┌──────────┐  ┌────────┐│
+│  │  Web 界面  │  │  dsh 运行时│  │ 托盘   ││
+│  │ （会话/插件）│  │（工具/沙箱）│  │（常驻）││
+│  └────────────┘  └──────────┘  └────────┘│
+└──────────────────────────────────────────┘
+</code></pre></div>
+<ul>
+<li><strong>界面</strong>：会话、工作区、插件管理、设置；</li>
+<li><strong>运行时</strong>：真正执行工具、读写文件、起子进程的那一层；</li>
+<li><strong>托盘进程</strong>：让它在关掉窗口后仍能继续跑任务。</li>
+</ul>
+<p>第三点很关键，也是后面无数“改了配置却不生效”的根源：<strong>关窗口不等于退出进程</strong>。Windows 要右键托盘图标退出，macOS 要 <code>Cmd+Q</code>。</p>
+<h2 id="c3-s3">3.2 界面四区，各管什么<a class="anchor" href="#c3-s3" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">区域</th>
+<th style="text-align: left;">你在这里做什么</th>
+<th style="text-align: left;">容易忽略的点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">左侧导航</td>
+<td style="text-align: left;">新会话、工作区、插件、设置</td>
+<td style="text-align: left;">插件入口在这里，不在设置里</td>
+</tr>
+<tr>
+<td style="text-align: left;">中央会话区</td>
+<td style="text-align: left;">看回答、看执行步骤、看工具结果</td>
+<td style="text-align: left;"><strong>要展开工具调用看细节</strong>，别只看结论</td>
+</tr>
+<tr>
+<td style="text-align: left;">底部输入区</td>
+<td style="text-align: left;">写任务、@文件、选模型</td>
+<td style="text-align: left;">工作区没选时，这里是灰的</td>
+</tr>
+<tr>
+<td style="text-align: left;">右上角</td>
+<td style="text-align: left;">展开侧边栏（浏览器、终端）</td>
+<td style="text-align: left;">内置终端在排错时很好用</td>
+</tr>
+</tbody>
+</table></div>
+<h3>一个使用习惯</h3>
+<p>看会话不要只看最后一段话。真正有价值的信息在<strong>工具调用记录</strong>里：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">▸ 读取文件  D:\demo\auto.csv          ← 读了哪个文件
+  参数: { path: &quot;auto.csv&quot; }
+  返回: 74 行 × 12 列                 ← 实际拿到了什么
+▸ 执行命令  python analyze.py         ← 跑了什么
+  退出码: 0
+</code></pre></div>
+<p>模型可能把“没读到文件”说成“数据是空的”。<strong>以上面的记录为准，不以模型的叙述为准</strong>——这条原则会贯穿全书。</p>
+<h2 id="c3-s4">3.3 首次配置：只做三件事<a class="anchor" href="#c3-s4" aria-label="本节链接">#</a></h2>
+<h3>第一件：填模型</h3>
+<p>路径：<strong>左下角账号菜单 → 设置 → 模型</strong>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">字段</th>
+<th style="text-align: left;">填什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">模型提供方</td>
+<td style="text-align: left;">先选 DeepSeek 官方</td>
+</tr>
+<tr>
+<td style="text-align: left;">API Key</td>
+<td style="text-align: left;">你的密钥，保存后界面只显示脱敏描述</td>
+</tr>
+<tr>
+<td style="text-align: left;">模型</td>
+<td style="text-align: left;">从当前可用列表里选</td>
+</tr>
+</tbody>
+</table></div>
+<p>填完保存，<strong>不需要重启</strong>，下一次请求就生效。</p>
+<h3>第二件：加工作区</h3>
+<p>点侧栏“工作区”旁的加号，选一个目录。</p>
+<div class="callout warning"><div class="co-body"><p><strong>加进去 ≠ 选中。</strong> 添加只是把目录登记到列表里，还要在输入框上方的“选择工作区”里明确选中它。这是“输入框灰着不能打字”最常见的原因。</p></div></div>
+<h3>第三件：选择工作区并创建会话</h3>
+<p>在系统选择器中选中目标文件夹（建议先用一个独立的测试目录，例如只含 <code>README.md</code> 和 <code>auto.csv</code> 的 demo 目录）。</p>
+<p>回到新会话，在输入框上方的<strong>选择工作区</strong>中选中该目录。<strong>Agent 预设</strong>选择标准模式；在输入区底部选择已配置的模型。</p>
+<p><strong>访问模式</strong>与 Agent 预设相互独立，通常有：<strong>仅可查看、工作区内修改、完全权限</strong> 三档。</p>
+<ul>
+<li>首次统计任务选择“仅可查看”，确认写入需求后再切换为“工作区内修改”；</li>
+<li>“工作区内修改”主要限制文件写入，不要把它理解成禁止读取所有工作区外路径或隔断网络；</li>
+<li>只读任务提示词<strong>不会</strong>自动收紧沙箱权限，权限以访问模式实际策略为准。</li>
+</ul>
+<h3>为什么工作区是强制的</h3>
+<p>因为 Harness 的所有文件操作都要有一个<strong>根</strong>：</p>
+<ul>
+<li>相对路径相对于它解析；</li>
+<li>访问模式（能否写、能否出界）以它为边界；</li>
+<li>会话日志记录的文件路径也以它为基准。</li>
+</ul>
+<p>没有根，工具就不知道该往哪儿动手。这不是产品偷懒，而是安全模型的必要前提。</p>
+<h2 id="c3-s5">3.4 访问模式：三档权限，别当装饰<a class="anchor" href="#c3-s5" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">档位</th>
+<th style="text-align: left;">允许什么</th>
+<th style="text-align: left;">什么时候用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">仅可查看</td>
+<td style="text-align: left;">只读，不写文件</td>
+<td style="text-align: left;">第一次接触新项目、审计数据、读论文代码</td>
+</tr>
+<tr>
+<td style="text-align: left;">工作区内修改</td>
+<td style="text-align: left;">可写，但限制在工作区内</td>
+<td style="text-align: left;">日常开发、跑分析脚本</td>
+</tr>
+<tr>
+<td style="text-align: left;">完全权限</td>
+<td style="text-align: left;">基本不限制</td>
+<td style="text-align: left;">明确知道自己在做什么时，短时使用</td>
+</tr>
+</tbody>
+</table></div>
+<p>三点必须说清楚：</p>
+<ol>
+<li><strong>提示词里写“只读”不会自动收紧权限。</strong> 权限由访问模式决定，提示词只是“请求”，不是“策略”。</li>
+<li><strong>“工作区内修改”限制的是写入</strong>，不要理解成“禁止读取工作区外的一切”或“断网”。</li>
+<li>第三档不是“高级功能”，是“高风险功能”。用完就调回来。</li>
+</ol>
+<div class="callout tip"><div class="co-body"><p><strong>养成一个动作</strong>：每个新项目的第一条指令都用“仅可查看”，等确认它读对了目录、认对了文件，再升到“工作区内修改”。这个习惯能挡掉大部分事故。</p></div></div>
+<h2 id="c3-s6">3.5 实战一：只读盘点一个数据目录<a class="anchor" href="#c3-s6" aria-label="本节链接">#</a></h2>
+<p>假设工作区 <code>D:\demo\</code> 里有 <code>README.md</code>、<code>auto.csv</code>（Stata 自带 auto 数据导出）、<code>notes.md</code>。</p>
+<p>第一条指令：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">请只读取当前工作区的 README.md 和 auto.csv 的表头与前 5 行。
+完成三件事：
+1. 用三句话概括这个目录是做什么的；
+2. 报告 auto.csv 的列名、行数；
+3. 指出哪些列看起来是数值型、哪些是字符型。
+不要修改或创建任何文件。
+</code></pre></div>
+<p><strong>验收标准</strong>（不是“回答得像不像”，而是这三个可核对的事实）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">检查项</th>
+<th style="text-align: left;">期望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">文件路径</td>
+<td style="text-align: left;">工具记录里是 <code>D:\demo\README.md</code>、<code>D:\demo\auto.csv</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">行数</td>
+<td style="text-align: left;">74 行（不含表头）</td>
+</tr>
+<tr>
+<td style="text-align: left;">类型判断</td>
+<td style="text-align: left;"><code>make</code> 为字符型，<code>price</code>、<code>mpg</code>、<code>weight</code> 为数值型</td>
+</tr>
+</tbody>
+</table></div>
+<p>如果它说“文件不存在”，先看工具记录里的路径——大概率是工作区选错了，或者用了相对路径解析到了别处。</p>
+<h2 id="c3-s7">3.6 实战二：让它产出一个可预览的结果页<a class="anchor" href="#c3-s7" aria-label="本节链接">#</a></h2>
+<p>只读跑通后，做一次写入练习。目标不要定成“做个网站”，定成“把刚才的分析变成一张能打开看的卡片”：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">基于 auto.csv，创建一个 report.html：
+- 标题：auto 数据快速概览
+- 内容：样本量、price 与 mpg 的均值/中位数/标准差、一张按 foreign 分组的均价条形图
+- 用原生 HTML/CSS/JS，不引用任何外部库和 CDN
+- 只允许创建 report.html，不要改动 README.md、auto.csv、notes.md
+- 完成后确认文件存在，并告诉我怎么在浏览器打开
+</code></pre></div>
+<p>完成后做三件核对：</p>
+<ol>
+<li>文件管理器里确实多了 <code>report.html</code>，大小不为 0；</li>
+<li>浏览器打开，数字与 CSV 实际计算一致（可以自己用 Stata 或 Python 算一遍对照）；</li>
+<li><code>README.md</code>、<code>auto.csv</code> 的修改时间没变。</li>
+</ol>
+<p>第 3 点最容易被忽略，也最能验证“它有没有越界”。</p>
+<h3>迭代的正确姿势</h3>
+<p>想改的时候，<strong>一次只提一个目标</strong>：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">把条形图改成横向，其它都不要动。
+</code></pre></div>
+<p>一次提五个需求，出问题时你无法判断是哪一处引起的。用 Git 的项目，每轮之后 <code>git diff</code> 看一眼改动范围，比读它的自我总结可靠。</p>
+<h2 id="c3-s8">3.7 插件页与创造模式<a class="anchor" href="#c3-s8" aria-label="本节链接">#</a></h2>
+<p>左侧“插件”页是能力扩展的入口：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">区块</th>
+<th style="text-align: left;">作用</th>
+<th style="text-align: left;">注意</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">官方插件</td>
+<td style="text-align: left;">产品自带扩展</td>
+<td style="text-align: left;">相对可信</td>
+</tr>
+<tr>
+<td style="text-align: left;">社区插件</td>
+<td style="text-align: left;">第三方能力</td>
+<td style="text-align: left;">来源、依赖、权限要自己看</td>
+</tr>
+<tr>
+<td style="text-align: left;">创造模式</td>
+<td style="text-align: left;">用对话生成插件</td>
+<td style="text-align: left;">生成的是<strong>代码</strong>，会真实运行</td>
+</tr>
+<tr>
+<td style="text-align: left;">已安装</td>
+<td style="text-align: left;">查看启用状态</td>
+<td style="text-align: left;">有的插件需要重启才生效</td>
+</tr>
+</tbody>
+</table></div>
+<p>在创造模式里可以这样起手：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">我想做一个「变量字典速查」面板：
+- 位置：右侧栏
+- 功能：读取工作区里的 codebook.md，按变量名搜索，显示标签、取值、缺失情况
+- 外观：浅色卡片，跟随应用主题
+- 约束：不引入外部依赖，不改动已有文件
+先给我实现方案和需要的权限，不要直接安装。
+</code></pre></div>
+<p>注意最后一句：<strong>先方案、后安装</strong>。插件一旦启用就拿到了运行时权限，“能装”和“安全”是两件事。</p>
+<h2 id="c3-s9">3.8 出问题时怎么判断<a class="anchor" href="#c3-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">现象</th>
+<th style="text-align: left;">先查什么</th>
+<th style="text-align: left;">再看什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">输入框不可用</td>
+<td style="text-align: left;">工作区是否选中</td>
+<td style="text-align: left;">模型是否已配置</td>
+</tr>
+<tr>
+<td style="text-align: left;">认证失败</td>
+<td style="text-align: left;">提供方选对了吗</td>
+<td style="text-align: left;">密钥、baseURL、协议是否匹配</td>
+</tr>
+<tr>
+<td style="text-align: left;">弹出审批</td>
+<td style="text-align: left;">命令是什么、路径在哪</td>
+<td style="text-align: left;">是否在本任务范围内，超范围就拒绝</td>
+</tr>
+<tr>
+<td style="text-align: left;">说完成了但没文件</td>
+<td style="text-align: left;">工具记录里的实际路径</td>
+<td style="text-align: left;">文件管理器确认；可能写到了别处</td>
+</tr>
+<tr>
+<td style="text-align: left;">HTML 预览空白</td>
+<td style="text-align: left;">文件是否非空</td>
+<td style="text-align: left;">浏览器控制台报错；是否打开了正确的文件</td>
+</tr>
+<tr>
+<td style="text-align: left;">改了配置没反应</td>
+<td style="text-align: left;">是否真正退出进程（含托盘）</td>
+<td style="text-align: left;">是否改的是当前 profile</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c3-s10">本章速记<a class="anchor" href="#c3-s10" aria-label="本节链接">#</a></h2>
+<ol>
+<li>桌面版 = 界面 + 运行时 + 托盘，<strong>关窗口不等于退出</strong>。</li>
+<li>工作区是文件操作的根，<strong>加了还要选中</strong>。</li>
+<li>访问模式是真实权限，提示词里的“只读”不改变权限。</li>
+<li>判断它干了什么，看<strong>工具调用记录</strong>，不看它的自我陈述。</li>
+<li>迭代时一次一个目标，改动后用 diff 核对范围。</li>
+</ol>
+<div class="pager"><a class="prev" href="#chapter-2"><div class="pg-label">← 上一章</div><div class="pg-title">安装、使用</div></a><a class="next" href="#chapter-4"><div class="pg-label">下一章 →</div><div class="pg-title">模型配置</div></a></div>
+</section>
+<section class="chapter" id="chapter-4">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>基础篇</div>
+    <h1 class="ch-title">第 4 章 DeepSeek Harness 模型配置</h1>
+    <p class="ch-sub">三类提供方、凭据机制与方舟 Coding Plan</p>
+    <div class="ch-meta">
+      <span>📖 第 4 章</span>
+      <span>⏱ 约 15 分钟</span>
+      <span>🔖 6,248 字</span>
+    </div>
+  </div>
+  <h2 id="c4-s1">本章要解决的问题<a class="anchor" href="#c4-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>三种模型提供方分别解决什么问题？</li>
+<li>为什么密钥“存进去就看不见了”，它到底存在哪？</li>
+<li>自定义网关接不通时，怎么快速定位是协议、字段还是模型声明的问题？</li>
+<li>已经有火山方舟 Coding Plan，怎么接进来？</li>
+</ul>
+<h2 id="c4-s2">4.1 三条接入路线<a class="anchor" href="#c4-s2" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">类型</th>
+<th style="text-align: left;">是什么</th>
+<th style="text-align: left;">需要准备</th>
+<th style="text-align: left;">适合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>DeepSeek 官方</strong></td>
+<td style="text-align: left;">官方端点，开箱可用</td>
+<td style="text-align: left;">一个 API Key</td>
+<td style="text-align: left;">绝大多数人起点</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>目录提供方</strong></td>
+<td style="text-align: left;">dsh 内置目录里已有的厂商（Anthropic、OpenAI 等）</td>
+<td style="text-align: left;">对应厂商凭据</td>
+<td style="text-align: left;">已订阅其它模型</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>自定义提供方</strong></td>
+<td style="text-align: left;">目录里没有的端点（公司网关、自建服务）</td>
+<td style="text-align: left;">Provider ID、baseURL、协议、凭据、模型</td>
+<td style="text-align: left;">内网、代理、私有部署</td>
+</tr>
+</tbody>
+</table></div>
+<p>入口：</p>
+<ul>
+<li>桌面版：<strong>左下角账号菜单 → 设置 → 模型</strong></li>
+<li>Web UI：终端打印的地址 → <strong>设置 → 模型</strong></li>
+</ul>
+<p><strong>改完即刻生效</strong>，不用重启。原因是模型路由在每次请求时解析，而不是启动时固化。</p>
+<h2 id="c4-s3">4.2 密钥去哪了：理解“只写”机制<a class="anchor" href="#c4-s3" aria-label="本节链接">#</a></h2>
+<p>保存之后，你会发现界面上再也看不到完整密钥。这不是显示 bug，而是设计如此。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">你输入明文密钥
+      │
+      ▼
+┌──────────────────┐        ┌─────────────────────────────┐
+│ 设置界面（只写） │───────▶│ $DSH_HOME/.credentials.yaml │
+└──────────────────┘        └─────────────────────────────┘
+      │                              │
+      ▼                              ▼
+界面只拿到&quot;凭据描述符&quot;        配置文件里只留引用 ID
+（脱敏，不含明文）            （例如 apiKeyEnv: XXX）
+</code></pre></div>
+<p>三个推论，都是实操中会撞上的：</p>
+<ol>
+<li><strong>配置文件里看不到密钥是正常的</strong>，不要以为没保存成功；</li>
+<li><strong>环境变量与已存凭据同名时，已存储的凭据优先</strong>——你在终端里 <code>export DEEPSEEK_API_KEY=...</code> 却发现没生效，很可能就是这个原因；</li>
+<li>换机器时，<code>.credentials.yaml</code> 不会跟着配置走，需要重新填。</li>
+</ol>
+<div class="callout important"><div class="co-body"><p><code>.credentials.yaml</code> 是明文存储（受文件权限保护）。共享目录、同步盘、代码仓库里都不该出现它。团队协作时，配置模板里只写 <code>apiKeyEnv</code>，让每个人用自己的环境变量。</p></div></div>
+<h2 id="c4-s4">4.3 模型列表从哪来<a class="anchor" href="#c4-s4" aria-label="本节链接">#</a></h2>
+<p>默认端点下的模型列表<strong>跟随官方发布列表</strong>：</p>
+<ul>
+<li>首次使用时加载；</li>
+<li>使用期间大约每 10 分钟后台刷新一次；</li>
+<li>加载失败时回退到内置列表，不影响已配置的模型。</li>
+</ul>
+<p>有两个细节值得知道：</p>
+<ul>
+<li>卡片上展示的是内置模型；<strong>新发布的模型可能只出现在对话框的模型选择器里</strong>；</li>
+<li>如果你把模型目录改成手动维护，就不再跟随发布列表；想恢复，选“恢复默认模型”。</li>
+</ul>
+<p>对研究场景的建议：<strong>写论文期间把模型目录固定下来</strong>。否则某天默认模型悄悄升级，你的复现结果会多出一个无法解释的变量。</p>
+<h2 id="c4-s5">4.4 目录提供方：省事，但有前提<a class="anchor" href="#c4-s5" aria-label="本节链接">#</a></h2>
+<p>选“添加提供方” → 选厂商 → 填密钥，端点、协议、模型列表都由目录提供，不用手写。</p>
+<p>但有些厂商用<strong>原生认证</strong>，只填一个 API Key 字段是不够的：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">厂商</th>
+<th style="text-align: left;">还需要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Bedrock</td>
+<td style="text-align: left;">AWS 凭据 + 区域</td>
+</tr>
+<tr>
+<td style="text-align: left;">Vertex</td>
+<td style="text-align: left;">ADC 项目</td>
+</tr>
+<tr>
+<td style="text-align: left;">Azure</td>
+<td style="text-align: left;">api-version</td>
+</tr>
+<tr>
+<td style="text-align: left;">Codex</td>
+<td style="text-align: left;">OAuth 授权</td>
+</tr>
+</tbody>
+</table></div>
+<p>路由 id 有固定约定，写配置时要对得上：Anthropic → <code>anthropic</code>，OpenAI → <code>openai</code>，Kimi → <code>moonshotai</code>，智谱 GLM → <code>zai</code>。</p>
+<h2 id="c4-s6">4.5 自定义提供方：字段不多，坑不少<a class="anchor" href="#c4-s6" aria-label="本节链接">#</a></h2>
+<p>路径：<strong>添加模型提供商 → 自定义模型 API</strong>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">字段</th>
+<th style="text-align: left;">说明</th>
+<th style="text-align: left;">必填</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Provider ID</td>
+<td style="text-align: left;">小写，<strong>永久标识</strong></td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr>
+<td style="text-align: left;">显示名称</td>
+<td style="text-align: left;">界面上显示的名字，可随时改</td>
+<td style="text-align: left;">否</td>
+</tr>
+<tr>
+<td style="text-align: left;">基础 URL</td>
+<td style="text-align: left;">端点的 baseURL</td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr>
+<td style="text-align: left;">API 协议</td>
+<td style="text-align: left;"><code>openai-completions</code> / <code>openai-responses</code> / <code>anthropic-messages</code> 三选一</td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr>
+<td style="text-align: left;">凭据</td>
+<td style="text-align: left;">按服务端要求；支持时可用环境变量</td>
+<td style="text-align: left;">视端点</td>
+</tr>
+<tr>
+<td style="text-align: left;">模型</td>
+<td style="text-align: left;">至少一个</td>
+<td style="text-align: left;">是</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Provider ID 为什么“永久”</h3>
+<p>它被写进了三个地方：请求路由、已保存会话的模型记录、凭据引用。改 ID 等于让这三处同时失效，所以产品干脆不允许改。</p>
+<p><strong>要改名怎么办？</strong> 新建一个提供方，把模型配好，再删掉旧的。已有会话仍指向旧 ID，会报 <code>UNKNOWN_MODEL</code>——这是预期行为，不是 bug。</p>
+<h3>一个提供方只能有一种协议</h3>
+<p><code>openai-completions</code> 和 <code>anthropic-messages</code> 的请求体结构不同，不能混在一个提供方里。公司网关同时暴露两种协议时，建两个提供方。</p>
+<h3>模型发现</h3>
+<p>模型目录里点“获取可用模型”，会按当前 baseURL 和凭据去查。端点不支持 <code>/models</code> 时，手动填模型 ID 即可。</p>
+<p><strong>选定某个模型后，它成为新会话的默认模型</strong>；已经发过请求的会话保留自己日志里的模型，不受影响。这个设计对复现很友好：旧会话不会因为你现在换了模型而“变味”。</p>
+<h2 id="c4-s7">4.6 推理等级：不是越高越好<a class="anchor" href="#c4-s7" aria-label="本节链接">#</a></h2>
+<p>支持档位的模型，可以在模型选择器里选 off / low / high 等。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">场景</th>
+<th style="text-align: left;">建议档位</th>
+<th style="text-align: left;">理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">批量格式整理、文件重命名</td>
+<td style="text-align: left;">off / low</td>
+<td style="text-align: left;">不需要推理，省钱省时间</td>
+</tr>
+<tr>
+<td style="text-align: left;">常规编码、数据分析</td>
+<td style="text-align: left;">默认档</td>
+<td style="text-align: left;">平衡</td>
+</tr>
+<tr>
+<td style="text-align: left;">复杂重构、跨文件推理</td>
+<td style="text-align: left;">high</td>
+<td style="text-align: left;">值得多花的 token</td>
+</tr>
+</tbody>
+</table></div>
+<p>直连 DeepSeek 官方路由不需要额外配置，模型自带档位；插件配置里的 <code>llm-deepseek.reasoningEffort</code> 可以改默认起始档。</p>
+<h3>走 OpenAI 兼容网关时的两个开关</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">情况</th>
+<th style="text-align: left;">配置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">网关后的模型默认开启思考，你想关掉</td>
+<td style="text-align: left;">路由加 <code>compat.thinkingFormat: deepseek</code>：off 档发 <code>thinking: {type: disabled}</code>，其它档补 <code>enabled</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">想彻底隐藏某模型的档位选择</td>
+<td style="text-align: left;"><code>reasoningEfforts: false</code>；之后若强行选择会报 <code>UNSUPPORTED_REASONING_EFFORT</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>另外两个常见兼容开关：</p>
+<ul>
+<li><code>compat.supportsDeveloperRole: false</code>：部分网关拒绝 <code>role: "developer"</code>；</li>
+<li><code>compat.maxTokensField: max_tokens</code>：默认发的是 <code>max_completion_tokens</code>，老网关不认。</li>
+</ul>
+<div class="callout warning"><div class="co-body"><p><strong>配置层级规则</strong>：路由级的 <code>compat</code> 是默认值，模型级逐字段覆盖。空值键（例如只写一个 <code>supportsDeveloperRole:</code> 后面不填）会被<strong>拒绝</strong>，而不是当成“忽略”。</p></div></div>
+<h2 id="c4-s8">4.7 图片输入：先声明，后使用<a class="anchor" href="#c4-s8" aria-label="本节链接">#</a></h2>
+<p>dsh 对多模态采取“<strong>先声明后使用</strong>”策略：</p>
+<ul>
+<li>手动录入的模型默认按纯文本对待；</li>
+<li>给未声明图片能力的模型附图片，<strong>发送前就会被拒绝</strong>，并点名是哪个模型。</li>
+</ul>
+<p>配置步骤：</p>
+<ol>
+<li>编辑提供方 → 打开自定义设置（新建时直接在模型目录里加模型）；</li>
+<li>展开该模型的选项 → <strong>输入类型</strong>勾选“图片”，保留文本；</li>
+<li>保存后开新会话，附一张测试图验证。</li>
+</ol>
+<p>需要写文件时，位置是：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">$DSH_HOME/profiles/&lt;profile&gt;/cordis.patch.yml
+</code></pre></div>
+<p>Web 默认 <code>web</code>，桌面版用设置页的“打开配置文件”定位真实路径。<strong>不要</strong>再往旧的 <code>settings.yaml</code> 里写模型配置。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml"># 文件路径：$DSH_HOME/profiles/web/cordis.patch.yml
+- id: llm-pi-ai
+  config:
+    providers:
+      my-gateway:
+        apiKeyEnv: GATEWAY_API_KEY
+        api: openai-completions
+        baseURL: https://gateway.example/v1
+        models:
+          - id: legacy-chat
+          - id: vision-preview
+            input: [text, image]
+</code></pre></div>
+<p>三个细节：</p>
+<ul>
+<li><code>input</code> 作用于<strong>单个模型</strong>；不写时先继承目录声明，再回退到路由的 <code>defaultInput</code>（默认只有 text）；</li>
+<li>要给一批未描述模型统一开视觉，可在路由上写 <code>defaultInput: [text, image]</code>；</li>
+<li>内置提供方的单模型覆盖写在 <code>modelOverrides</code> 下（以模型 ID 为键）；DeepSeek 直连路由用的是 <code>inputModalities</code>，<strong>两套字段不能互抄</strong>。</li>
+</ul>
+<div class="callout note"><div class="co-body"><p><code>input</code> 是你对端点的<strong>断言</strong>，不是检查。你声明了图片能力，但端点其实不支持，请求会在服务端被拒。声明错了，报错会出现在“运行期”而不是“配置期”。</p></div></div>
+<h2 id="c4-s9">4.8 排错表：按错误码走<a class="anchor" href="#c4-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">错误</th>
+<th style="text-align: left;">含义</th>
+<th style="text-align: left;">动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>MISSING_CREDENTIAL</code></td>
+<td style="text-align: left;">缺提供方密钥</td>
+<td style="text-align: left;">在模型页存密钥，或补上被引用的环境变量</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>UNKNOWN_MODEL</code></td>
+<td style="text-align: left;">请求的模型没配</td>
+<td style="text-align: left;">换已配置模型，或给该提供方补模型</td>
+</tr>
+<tr>
+<td style="text-align: left;">获取模型返回 401</td>
+<td style="text-align: left;">密钥无效，或端点不支持发现</td>
+<td style="text-align: left;">查密钥与协议；手填模型 ID</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>UNSUPPORTED_REASONING_EFFORT</code></td>
+<td style="text-align: left;">模型没有该档位</td>
+<td style="text-align: left;">换档；或 <code>reasoningEfforts: false</code> 去掉档位</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>CLIENT_UPGRADE_REQUIRED</code></td>
+<td style="text-align: left;">账号模型要求更新客户端</td>
+<td style="text-align: left;">按提示升级 dsh</td>
+</tr>
+<tr>
+<td style="text-align: left;">图片发送前被拒</td>
+<td style="text-align: left;">模型没声明图片模态</td>
+<td style="text-align: left;">加 <code>input: [text, image]</code>；直连用 <code>inputModalities</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">提供方拒绝带图请求</td>
+<td style="text-align: left;">声明了端点没有的能力</td>
+<td style="text-align: left;">去掉 image，开新会话</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c4-s10">4.9 给计量用户的配置建议<a class="anchor" href="#c4-s10" aria-label="本节链接">#</a></h2>
+<p>以下是自己的取舍，供参考：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">决策</th>
+<th style="text-align: left;">做法</th>
+<th style="text-align: left;">原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">主力模型</td>
+<td style="text-align: left;">官方直连 + 默认档</td>
+<td style="text-align: left;">少一层网关，少一类兼容问题</td>
+</tr>
+<tr>
+<td style="text-align: left;">复现项目</td>
+<td style="text-align: left;">固定模型 ID，不追新</td>
+<td style="text-align: left;">结果差异要能归因</td>
+</tr>
+<tr>
+<td style="text-align: left;">大批量文本处理</td>
+<td style="text-align: left;">降到 low / off</td>
+<td style="text-align: left;">成本差几倍，质量差异不大</td>
+</tr>
+<tr>
+<td style="text-align: left;">私有数据</td>
+<td style="text-align: left;">走公司网关 + 环境变量密钥</td>
+<td style="text-align: left;">密钥不落配置文件</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c4-s11">4.10 实战：接入火山方舟 Coding Plan<a class="anchor" href="#c4-s11" aria-label="本节链接">#</a></h2>
+<p>如果你已经在用火山方舟 Coding Plan，可以把额度直接用在 DeepSeek Harness 上。要点只有三个：<strong>选对协议、选对 Base URL、填对模型名</strong>。三者错一个，表现都是“认证失败”或“模型不存在”，很容易误判成密钥问题。</p>
+<h3>4.10.1 先看核心参数</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">参数</th>
+<th style="text-align: left;">取值</th>
+<th style="text-align: left;">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">API Key</td>
+<td style="text-align: left;">方舟控制台的 API Key</td>
+<td style="text-align: left;">与 DeepSeek 官方 Key 不通用</td>
+</tr>
+<tr>
+<td style="text-align: left;">Base URL（OpenAI 协议）</td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding/v3</code></td>
+<td style="text-align: left;"><code>openai-completions</code> 与 <code>openai-responses</code> 都用它</td>
+</tr>
+<tr>
+<td style="text-align: left;">Base URL（Anthropic 协议）</td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding</code></td>
+<td style="text-align: left;">仅 <code>anthropic-messages</code> 使用</td>
+</tr>
+<tr>
+<td style="text-align: left;">模型</td>
+<td style="text-align: left;">见下方清单</td>
+<td style="text-align: left;">也可在控制台切换 <code>ark-code-latest</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout important"><div class="co-body"><p><strong>不要用 <code>https://ark.cn-beijing.volces.com/api/v3</code>。</strong> 这个地址走的是普通按量计费接口，<strong>不消耗 Coding Plan 额度，会产生额外费用</strong>。多一个 <code>/coding</code> 或少一个 <code>/v3</code>，账单完全不同。</p></div></div>
+<p>模型配置有两种思路：</p>
+<ul>
+<li><strong>在配置文件里指定 Model Name</strong>：可以实时切换具体模型，适合需要固定版本的研究场景；</li>
+<li><strong>在控制台管理</strong>：选 <code>ark-code-latest</code>，由控制台决定当前指向哪个模型，适合“跟着官方走”。</li>
+</ul>
+<p>可填的 Model Name 如下（支持全小写写法，也支持直接复制控制台开通管理页里的模型名）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">系列</th>
+<th style="text-align: left;">可用名称</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Doubao Seed</td>
+<td style="text-align: left;"><code>doubao-seed-evolving</code>、<code>doubao-seed-2.1-pro</code>、<code>doubao-seed-2.1-lite</code>、<code>doubao-seed-2.0-mini</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">GLM</td>
+<td style="text-align: left;"><code>glm-5.3</code>（可用 <code>glm-latest</code>）、<code>glm-5.3-flash</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">DeepSeek</td>
+<td style="text-align: left;"><code>deepseek-v4.1-flash</code>、<code>deepseek-v4.1-flash-economy</code>、<code>deepseek-v4-flash</code>、<code>deepseek-v4-pro</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Kimi</td>
+<td style="text-align: left;"><code>kimi-k2.8-preview</code>、<code>kimi-k3.1-pro</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout note"><div class="co-body"><p>Model Name <strong>不支持</strong>写成 <code>Auto</code>。想用自动选择，请到控制台切换到该模式，而不是在配置文件里写 <code>Auto</code>——那会直接报模型不存在。</p></div></div>
+<h3>4.10.2 前提条件</h3>
+<ul>
+<li>已订阅 Coding Plan 套餐（未订阅则先到方舟活动页按需订阅）；</li>
+<li>已安装 Node.js（建议 LTS 版本），即已能用 npm 方式启动 dsh；</li>
+<li>已拿到方舟 API Key。</li>
+</ul>
+<h3>4.10.3 方式一：Ark CLI 一键配置（推荐）</h3>
+<p>Ark CLI 是火山方舟官方的命令行工具，本地完成认证后可以把 provider 信息直接写进常用 AI Agent 的配置里，省掉手填 baseURL、协议、模型名这三步最容易出错的操作。</p>
+<p>安装、登录与写入的具体命令以方舟官网文档为准（各版本会变），你只需要记住三步的判断标准：</p>
+<ol>
+<li><strong>认证成功</strong>：CLI 能列出你的套餐与可用模型；</li>
+<li><strong>写入成功</strong>：DSH 的模型页里出现 <code>ark</code> 相关提供方，不是空列表；</li>
+<li><strong>调用成功</strong>：新会话里发一句话，能拿到回复且不报 401/404。</li>
+</ol>
+<h3>4.10.4 方式二：通过 Web UI 手动配置</h3>
+<ol>
+<li>启动 Web UI 并打开浏览器：</li>
+</ol>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">npx @deepseek-ai/dsh web
+</code></pre></div>
+<p>默认地址 <code>http://127.0.0.1:3080/</code>。</p>
+<ol start="2">
+<li>左下角 <strong>设置 → 模型</strong>。</li>
+</ol>
+<figure class="fig-single"><img src="https://arkdocs.tos-cn-beijing.volces.com/images/CodingPlan/image-20260814-001513-207.png" alt="在 DeepSeek Harness 中打开设置"><figcaption>图 4-1　左下角进入“设置”，再选“模型”</figcaption></figure>
+
+<ol start="3">
+<li>有两条路可走，任选其一。</li>
+</ol>
+<p><strong>路线 A：改 DeepSeek 卡片的自定义设置</strong></p>
+<p>在 DeepSeek 卡片上选“自定义设置”，把三处改掉：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">字段</th>
+<th style="text-align: left;">填什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">API 密钥</td>
+<td style="text-align: left;">方舟 API Key</td>
+</tr>
+<tr>
+<td style="text-align: left;">API 地址</td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding/v3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">添加模型</td>
+<td style="text-align: left;">从 4.10.1 的清单里挑，至少一个</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="fig-single"><img src="https://arkdocs.tos-cn-beijing.volces.com/images/CodingPlan/image-20260814-001035-757.png" alt="DeepSeek 卡片的自定义设置"><figcaption>图 4-2　自定义设置里替换 API 地址与密钥，再添加模型</figcaption></figure>
+
+<p><strong>路线 B：新增一个自定义提供方</strong></p>
+<p>点“添加自定义提供方”，按下表填写。好处是与原来的 DeepSeek 官方配置并存，随时切回。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">字段</th>
+<th style="text-align: left;">填什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Provider ID</td>
+<td style="text-align: left;">自定，如 <code>ark-coding</code>；<strong>建好后不能改</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">显示名称</td>
+<td style="text-align: left;">自定，如“方舟 Coding Plan”</td>
+</tr>
+<tr>
+<td style="text-align: left;">API 地址 / 协议</td>
+<td style="text-align: left;">见下表对应关系</td>
+</tr>
+<tr>
+<td style="text-align: left;">API 密钥</td>
+<td style="text-align: left;">方舟 API Key</td>
+</tr>
+<tr>
+<td style="text-align: left;">模型</td>
+<td style="text-align: left;">从 4.10.1 的清单里挑</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">API 协议</th>
+<th style="text-align: left;">API 地址</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>openai-completions</code></td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding/v3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>openai-responses</code></td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding/v3</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>anthropic-messages</code></td>
+<td style="text-align: left;"><code>https://ark.cn-beijing.volces.com/api/coding</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.10.5 方式三：通过方舟官方插件配置</h3>
+<p>方舟提供了 DeepSeek Harness 官方插件 <code>dsh-volcengine-plugin</code>。安装并启用后，在“火山方舟”插件面板里可以选择接入 Agent Plan、Coding Plan 或后付费模型，只需要填 API Key，provider 由插件自动添加。</p>
+<p>这是三种方式里最省事的，前提是你愿意安装一个第三方（虽然是官方）插件——按第 6 章的四项验收走一遍再启用。</p>
+<h3>4.10.6 让模型支持图片输入</h3>
+<p>需要读图（截图、论文图表、手写公式）时，还要在配置里声明输入类型。点模型页的“打开配置文件”，在对应 provider 的模型条目下加一行 <code>input: [text, image]</code>：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml">- id: llm-pi-ai
+  config:
+    providers:
+      ark-model:
+        displayName: ark-model
+        apiKeyEnv: ARK_MODEL_API_KEY
+        api: openai-responses
+        baseURL: https://ark.cn-beijing.volces.com/api/coding/v3
+        models:
+          - id: doubao-seed-2.1-pro
+            name: doubao-seed-2.1-pro
+            input: [text, image]
+</code></pre></div>
+<div class="callout note"><div class="co-body"><p>方舟文档给出的示例文件是 <code>$DSH_HOME/settings.yaml</code>，而新版 dsh 的模型配置统一落在 <code>profiles/&lt;profile&gt;/cordis.patch.yml</code>。<strong>两处字段写法一致</strong>，以你当前版本“打开配置文件”实际打开的那个文件为准；如果打开的仍是 <code>settings.yaml</code>，就照它写。</p></div></div>
+<h3>4.10.7 开始使用</h3>
+<ol>
+<li>点 <strong>选择工作区</strong>，添加启动 <code>dsh</code> 时所在的项目目录；<strong>选中工作区后，输入框才可用</strong>；</li>
+<li>在输入框右下角的模型下拉菜单里选已配置的方舟模型；</li>
+<li>直接输入需求开始。</li>
+</ol>
+<figure class="fig-single"><img src="https://arkdocs.tos-cn-beijing.volces.com/images/agent-plan/image-20261022-204246-579.png" alt="在输入框右下角选择模型"><figcaption>图 4-3　模型下拉菜单里选择已配置的方舟模型</figcaption></figure>
+
+<p>Agent 可以读取和编辑工作区文件、运行命令、委派工作并维护计划。当操作在当前权限策略下需要审批时，Web UI 会先询问你。</p>
+<h3>4.10.8 四个容易踩的点</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">现象</th>
+<th style="text-align: left;">多半是</th>
+<th style="text-align: left;">怎么办</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">401 未授权</td>
+<td style="text-align: left;">用了 DeepSeek 官方 Key，或 Key 与区域不匹配</td>
+<td style="text-align: left;">换成方舟控制台的 API Key</td>
+</tr>
+<tr>
+<td style="text-align: left;">404 模型不存在</td>
+<td style="text-align: left;">Base URL 少写 <code>/coding</code>，或模型名拼错</td>
+<td style="text-align: left;">对照 4.10.1 的两张表逐个核对</td>
+</tr>
+<tr>
+<td style="text-align: left;">能用但账单在涨</td>
+<td style="text-align: left;">用了 <code>/api/v3</code> 而不是 <code>/api/coding/v3</code></td>
+<td style="text-align: left;">改回 coding 地址</td>
+</tr>
+<tr>
+<td style="text-align: left;">报“额度不足”但套餐还有</td>
+<td style="text-align: left;">Model Name 写了 <code>Auto</code></td>
+<td style="text-align: left;">改为具体模型名，或用控制台的自动模式</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout tip"><div class="co-body"><p><strong>想同时保留官方与方舟两条线</strong>：用“路线 B”新建一个 <code>ark-coding</code> 提供方，两个 provider 各自独立。切换时只改会话里的模型选择，不用动配置——这对“同一篇文章要用不同模型交叉验证”的场景特别顺手。</p></div></div>
+<h2 id="c4-s12">本章速记<a class="anchor" href="#c4-s12" aria-label="本节链接">#</a></h2>
+<ol>
+<li>密钥是<strong>只写</strong>的，存在 <code>.credentials.yaml</code>，配置里只有引用。</li>
+<li><strong>已存凭据优先于同名环境变量</strong>。</li>
+<li><strong>Provider ID 永久</strong>，改名只能新建再删旧。</li>
+<li>推理档位是成本开关，不是“越高越聪明”。</li>
+<li>图片能力要<strong>显式声明</strong>，否则发送前就被拦。</li>
+<li>方舟 Coding Plan 记三条：<code>/api/coding/v3</code>、协议与地址配对、模型名不能写 <code>Auto</code>。</li>
+</ol>
+<div class="pager"><a class="prev" href="#chapter-3"><div class="pg-label">← 上一章</div><div class="pg-title">桌面版</div></a><a class="next" href="#chapter-5"><div class="pg-label">下一章 →</div><div class="pg-title">运行模式</div></a></div>
+</section>
+<section class="chapter" id="chapter-5">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>基础篇</div>
+    <h1 class="ch-title">第 5 章 运行模式</h1>
+    <p class="ch-sub">模式 = 一组预先配好的插件</p>
+    <div class="ch-meta">
+      <span>📖 第 5 章</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,374 字</span>
+    </div>
+  </div>
+  <h2 id="c5-s1">本章要解决的问题<a class="anchor" href="#c5-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>“运行模式”到底换的是什么？</li>
+<li>PTC 模式凭什么能省上下文？</li>
+<li>极简模式为什么不是“低配版”？</li>
+</ul>
+<h2 id="c5-s2">5.1 模式 = 一组预先配好的插件<a class="anchor" href="#c5-s2" aria-label="本节链接">#</a></h2>
+<p>先给结论，后面全部围绕它展开：</p>
+<blockquote>
+<p><strong>模式不是模型的档位，而是插件组合的预设。</strong></p>
+</blockquote>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">Profile：决定启动哪套应用（web / desktop / headless）
+   │
+   └── 模式：决定这个会话加载哪组插件
+          ├── 标准：文件 + Shell + 搜索 + 子代理 + 计划
+          ├── PTC：上述能力 + 收拢为 run_code
+          ├── 极简：只剩 bash + 文件编辑器
+          └── 创作者：标准能力 + 运行时检查 + 热加载试验
+</code></pre></div>
+<p>所以切换模式<strong>不会让模型变聪明</strong>，只是换了一套工具和工作方式。选哪个，取决于你手里是什么活。</p>
+<h2 id="c5-s3">5.2 四种模式一览<a class="anchor" href="#c5-s3" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">模式</th>
+<th style="text-align: left;">一句话</th>
+<th style="text-align: left;">典型场景</th>
+<th style="text-align: left;">代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">标准</td>
+<td style="text-align: left;">完整的日常智能体</td>
+<td style="text-align: left;">写代码、整数据、写文档</td>
+<td style="text-align: left;">工具多，上下文占用大</td>
+</tr>
+<tr>
+<td style="text-align: left;">PTC</td>
+<td style="text-align: left;">用一段程序编排多步工具调用</td>
+<td style="text-align: left;">批量处理、流程固定的长任务</td>
+<td style="text-align: left;">需要模型会写代码</td>
+</tr>
+<tr>
+<td style="text-align: left;">极简</td>
+<td style="text-align: left;">刻意收窄到两个工具</td>
+<td style="text-align: left;">评测模型、定位问题是模型还是环境</td>
+<td style="text-align: left;">干活效率低</td>
+</tr>
+<tr>
+<td style="text-align: left;">创作者</td>
+<td style="text-align: left;">改造 Harness 本身</td>
+<td style="text-align: left;">做插件、定制界面、固化新模式</td>
+<td style="text-align: left;">风险高，生成的是会运行的代码</td>
+</tr>
+</tbody>
+</table></div>
+<p>能力关系：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">               ┌──────────────────────────┐
+               │  创作者 = 标准 + 改造能力 │
+               └────────────▲─────────────┘
+                            │
+┌───────────────┐   ┌───────┴───────┐
+│ 极简 = 标准 −  │   │   标准（基座） │
+│ 绝大部分工具   │   └───────▲───────┘
+└───────────────┘           │
+               ┌────────────┴─────────────┐
+               │  PTC = 标准 + 程序化编排  │
+               └──────────────────────────┘
+</code></pre></div>
+<h2 id="c5-s4">5.3 标准模式：默认就选它<a class="anchor" href="#c5-s4" aria-label="本节链接">#</a></h2>
+<p>如果你不知道选哪个，选标准模式。它提供：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">能力</th>
+<th style="text-align: left;">用起来是什么感觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">文件读写编辑</td>
+<td style="text-align: left;">能看项目、能改代码</td>
+</tr>
+<tr>
+<td style="text-align: left;">执行终端命令</td>
+<td style="text-align: left;">跑脚本、跑测试，执行前有确认</td>
+</tr>
+<tr>
+<td style="text-align: left;">联网搜索</td>
+<td style="text-align: left;">查文档、查报错</td>
+</tr>
+<tr>
+<td style="text-align: left;">子智能体</td>
+<td style="text-align: left;">把子任务丢出去并行处理</td>
+</tr>
+<tr>
+<td style="text-align: left;">计划模式</td>
+<td style="text-align: left;">先给方案，你点头再动手</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout tip"><div class="co-body"><p>新手最容易犯的错是“上来就让它改生产代码”。正确顺序：<strong>只读任务 → 小范围写入 → 完整任务</strong>。每一步都用工具记录核对，而不是看它说“已完成”。</p></div></div>
+<h2 id="c5-s5">5.4 PTC 模式：把多轮调用压成一段程序<a class="anchor" href="#c5-s5" aria-label="本节链接">#</a></h2>
+<p>PTC = Programmatic Tool Calling（程序化工具调用）。它背后的观察很朴素：</p>
+<blockquote>
+<p><strong>模型写代码，比一步一步吐工具调用更稳。</strong></p>
+</blockquote>
+<h3>普通模式 vs PTC</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">对比</th>
+<th style="text-align: left;">标准模式</th>
+<th style="text-align: left;">PTC 模式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">交互形态</td>
+<td style="text-align: left;">调一个工具 → 看结果 → 再调下一个</td>
+<td style="text-align: left;">写一段 TypeScript → 一次提交执行</td>
+</tr>
+<tr>
+<td style="text-align: left;">上下文占用</td>
+<td style="text-align: left;">每步中间结果都进对话</td>
+<td style="text-align: left;">只有返回值和日志回到对话</td>
+</tr>
+<tr>
+<td style="text-align: left;">适合</td>
+<td style="text-align: left;">步骤少、目标明确</td>
+<td style="text-align: left;">步骤多、逻辑固定、需要循环/判断</td>
+</tr>
+</tbody>
+</table></div>
+<p>在 PTC 模式下，界面上只暴露一个 <code>run_code</code> 工具；其它工具以 SDK 形式出现在代码里，用 <code>await tools.xxx()</code> 调用。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">typescript</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">// PTC 程序示意：一次提交，在会话沙箱的独立进程中执行
+const files = await tools.list_files({ path: &quot;do&quot; });            // 只读，可与下一行并行
+const dict  = await tools.read_file({ path: &quot;docs/codebook.md&quot; }); // 互不依赖
+
+// 只把结论返回给模型，中间过程不占上下文
+const doFiles = files.entries.filter(f =&gt; f.endsWith(&quot;.do&quot;));
+return {
+  doCount: doFiles.length,
+  doFiles,
+  dictHead: dict.text.slice(0, 200),
+};
+</code></pre></div>
+<h3>执行语义</h3>
+<ul>
+<li>运行在<strong>会话沙箱策略之下</strong>的独立托管进程里；</li>
+<li>子调用仍走统一工具流水线，<strong>审批与钩子照常生效</strong>——PTC 不是“绕过审批的后门”；</li>
+<li>独立的只读调用可以并行（默认上限 10 路）；会改状态的操作按提交顺序串行。</li>
+</ul>
+<h3>什么时候值得切</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">值得</th>
+<th style="text-align: left;">不值得</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">要遍历 30 个 <code>.do</code> 文件做统一替换</td>
+<td style="text-align: left;">只改一个文件的一行</td>
+</tr>
+<tr>
+<td style="text-align: left;">批量读 100 个 CSV 的表头做汇总</td>
+<td style="text-align: left;">读一个文件回答问题</td>
+</tr>
+<tr>
+<td style="text-align: left;">固定流程的流水线（清洗→回归→导出）</td>
+<td style="text-align: left;">探索性任务，下一步取决于上一步结果</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c5-s6">5.5 极简模式：一把尺子，不是一台轮椅<a class="anchor" href="#c5-s6" aria-label="本节链接">#</a></h2>
+<p>极简模式常年被误解。它只保留两个工具：</p>
+<ul>
+<li>持久化 <code>bash</code>；</li>
+<li><code>str_replace_editor</code>（文件编辑器）。</li>
+</ul>
+<p>它<strong>不是</strong>为低配电脑准备的，而是为<strong>归因</strong>准备的：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你想知道</th>
+<th style="text-align: left;">极简模式怎么帮你</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">这个任务是模型能力不够，还是工具太好用？</td>
+<td style="text-align: left;">把工具削到最少，看模型裸奔能跑多远</td>
+</tr>
+<tr>
+<td style="text-align: left;">换模型后提升来自模型还是来自 Harness？</td>
+<td style="text-align: left;">固定环境，只换模型，结果可比</td>
+</tr>
+<tr>
+<td style="text-align: left;">某个失败是环境问题还是理解问题？</td>
+<td style="text-align: left;">用极简环境复现，排除工具干扰</td>
+</tr>
+</tbody>
+</table></div>
+<p>DeepSeek 自己的代码智能体基准就用极简模式跑。原因很直接：<strong>评测要公平，就不能让 Harness 帮太多忙</strong>。</p>
+<p>所以日常干活别用它。它不是“轻量版标准模式”，是“对照组”。</p>
+<h2 id="c5-s7">5.6 创作者模式：把 Harness 当素材<a class="anchor" href="#c5-s7" aria-label="本节链接">#</a></h2>
+<p>前三种模式的工作对象是你的任务；创作者模式的工作对象是 <strong>Harness 自己</strong>。</p>
+<p>四项能力：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">能力</th>
+<th style="text-align: left;">干什么</th>
+<th style="text-align: left;">实际价值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">检查运行时</td>
+<td style="text-align: left;">看当前加载了哪些插件、服务、依赖</td>
+<td style="text-align: left;">动手前先知道能接在哪</td>
+</tr>
+<tr>
+<td style="text-align: left;">内存中试验</td>
+<td style="text-align: left;">新插件先加载到当前会话内存</td>
+<td style="text-align: left;">不改源码、不重启，试错成本极低</td>
+</tr>
+<tr>
+<td style="text-align: left;">自然语言生成插件</td>
+<td style="text-align: left;">你描述，它查接口、写代码、加载</td>
+<td style="text-align: left;">不会 TS 也能定制</td>
+</tr>
+<tr>
+<td style="text-align: left;">固化为预设</td>
+<td style="text-align: left;">把可用组合保存成新模式</td>
+<td style="text-align: left;">造出你自己的“第五种模式”</td>
+</tr>
+</tbody>
+</table></div>
+<h3>从一条能用的提示词开始</h3>
+<p>好提示词包含四件事：<strong>位置 + 功能 + 外观 + 约束</strong>。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">帮我加一个插件：
+- 位置：右侧栏面板
+- 功能：读取工作区 output/ 下最新的回归结果表（csv），
+        显示系数、标准误、显著性星号，支持按变量名搜索
+- 外观：浅色卡片，等宽字体显示数字，跟随应用主题
+- 约束：只读，不允许写文件；不引入外部依赖；不要遮挡主编辑区
+</code></pre></div>
+<h3>四条实测有效的技巧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">技巧</th>
+<th style="text-align: left;">做法</th>
+<th style="text-align: left;">为什么有效</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">先最小可用</td>
+<td style="text-align: left;">第一轮只要核心功能</td>
+<td style="text-align: left;">需求越大，一次做对的概率越低</td>
+</tr>
+<tr>
+<td style="text-align: left;">约束写进提示词</td>
+<td style="text-align: left;">明确“不要做什么”</td>
+<td style="text-align: left;">模型不会自动知道你的边界</td>
+</tr>
+<tr>
+<td style="text-align: left;">描述现象而非结论</td>
+<td style="text-align: left;">“点击没反应、面板被遮住”</td>
+<td style="text-align: left;">结论可能是错的，现象不会</td>
+</tr>
+<tr>
+<td style="text-align: left;">给视觉参照</td>
+<td style="text-align: left;">“参考应用现有卡片样式”</td>
+<td style="text-align: left;">比形容词更可控</td>
+</tr>
+</tbody>
+</table></div>
+<h3>练手方向（按难度）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">难度</th>
+<th style="text-align: left;">做什么</th>
+<th style="text-align: left;">练的是什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">入门</td>
+<td style="text-align: left;">变量字典速查面板</td>
+<td style="text-align: left;">位置 + 只读数据</td>
+</tr>
+<tr>
+<td style="text-align: left;">入门</td>
+<td style="text-align: left;">当前会话 token 用量小卡片</td>
+<td style="text-align: left;">读取运行时信息</td>
+</tr>
+<tr>
+<td style="text-align: left;">进阶</td>
+<td style="text-align: left;">回归结果对照表（论文值 vs 复现值）</td>
+<td style="text-align: left;">表格交互 + 文件读取</td>
+</tr>
+<tr>
+<td style="text-align: left;">进阶</td>
+<td style="text-align: left;">论文 PDF 侧栏阅读器（高亮、笔记）</td>
+<td style="text-align: left;">复杂 UI + 状态管理</td>
+</tr>
+<tr>
+<td style="text-align: left;">高级</td>
+<td style="text-align: left;">复现流程仪表盘（阶段/状态/日志）</td>
+<td style="text-align: left;">多组件协作</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c5-s8">5.7 把试验固化成自己的模式<a class="anchor" href="#c5-s8" aria-label="本节链接">#</a></h2>
+<p>完整路径：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">检查运行时 → 加载试验插件 → 观察依赖 → 调整组合 → 保存为预设
+</code></pre></div>
+<p>例如给计量工作流配一套“实证模式”：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">标准能力
+  + 变量字典面板（查 codebook）
+  + 结果对照表（论文值 vs 复现值）
+  + 图形预览器（get_graph 的产物直接看）
+  − 联网搜索（离线环境里没必要）
+</code></pre></div>
+<p>固化之后，下次开新会话直接选它，不用每次重新描述。</p>
+<h2 id="c5-s9">5.8 模式选择决策表<a class="anchor" href="#c5-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你要做的事</th>
+<th style="text-align: left;">选</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">整理数据、改代码、写文档</td>
+<td style="text-align: left;">标准</td>
+</tr>
+<tr>
+<td style="text-align: left;">批量遍历、流程固定的多步任务</td>
+<td style="text-align: left;">PTC</td>
+</tr>
+<tr>
+<td style="text-align: left;">判断“是模型问题还是环境问题”</td>
+<td style="text-align: left;">极简</td>
+</tr>
+<tr>
+<td style="text-align: left;">给 Harness 加界面/工具，做自己的预设</td>
+<td style="text-align: left;">创作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>再加一条经验：<strong>拿不准就用标准模式</strong>。切错模式的成本，通常高于用标准模式多花的那点 token。</p>
+<h2 id="c5-s10">5.9 安全边界<a class="anchor" href="#c5-s10" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">风险</th>
+<th style="text-align: left;">说明</th>
+<th style="text-align: left;">做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">插件就是代码</td>
+<td style="text-align: left;">生成的、下载的都会真实运行</td>
+<td style="text-align: left;">来源不明的不装；生成的先读一遍</td>
+</tr>
+<tr>
+<td style="text-align: left;">试验目录被读写</td>
+<td style="text-align: left;">创作者模式会在工作区里写文件</td>
+<td style="text-align: left;">只在测试目录试验</td>
+</tr>
+<tr>
+<td style="text-align: left;">审批疲劳</td>
+<td style="text-align: left;">弹窗太多时人会习惯性点允许</td>
+<td style="text-align: left;">高风险操作放慢，逐条看命令与路径</td>
+</tr>
+<tr>
+<td style="text-align: left;">预览版波动</td>
+<td style="text-align: left;">可能有破坏性变更</td>
+<td style="text-align: left;">重要环境固定版本</td>
+</tr>
+<tr>
+<td style="text-align: left;">费用</td>
+<td style="text-align: left;">Harness 免费，模型按量计费</td>
+<td style="text-align: left;">控制迭代轮数；批量任务降推理档</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c5-s11">本章速记<a class="anchor" href="#c5-s11" aria-label="本节链接">#</a></h2>
+<ol>
+<li><strong>模式 = 预设插件组合</strong>，不是模型档位。</li>
+<li>标准是基座，PTC 和创作者做加法，极简做减法。</li>
+<li>PTC 省的是<strong>上下文</strong>，不是审批——审批照旧。</li>
+<li>极简模式是<strong>评测对照组</strong>，不是低配版。</li>
+<li>创作者模式改的是 Harness，产出是<strong>会运行的代码</strong>。</li>
+</ol>
+<h2 id="c5-s12">延伸练习<a class="anchor" href="#c5-s12" aria-label="本节链接">#</a></h2>
+<ul>
+<li>同一个任务（例如“统计 do 目录下所有 .do 文件的行数”）分别用标准模式和 PTC 模式跑一次，比较工具调用次数与上下文长度；</li>
+<li>在创作者模式里做一个只读的小面板，然后用“检查运行时”看它依赖了哪些服务；</li>
+<li>把极简模式跑一次失败任务，记录它的报错，再用标准模式跑同一个任务，对比差异。</li>
+</ul>
+<div class="pager"><a class="prev" href="#chapter-4"><div class="pg-label">← 上一章</div><div class="pg-title">模型配置</div></a><a class="next" href="#chapter-6"><div class="pg-label">下一章 →</div><div class="pg-title">插件加载、安装</div></a></div>
+</section>
+<section class="chapter" id="chapter-6">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>插件篇</div>
+    <h1 class="ch-title">第 6 章 插件加载、安装</h1>
+    <p class="ch-sub">insert 语义与安装后的四项验收</p>
+    <div class="ch-meta">
+      <span>📖 第 6 章</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,367 字</span>
+    </div>
+  </div>
+  <h2 id="c6-s1">本章要解决的问题<a class="anchor" href="#c6-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>一个插件从“文件存在”到“模型能用”，中间经过哪几步？</li>
+<li>为什么配置写得很像样，却完全没有生效、也没有报错？</li>
+<li>安装完怎么验证，而不是自我安慰“应该装上了”？</li>
+</ul>
+<h2 id="c6-s2">6.1 先分清两个层次<a class="anchor" href="#c6-s2" aria-label="本节链接">#</a></h2>
+<p>这是本章最重要的一张表。混淆它，后面的问题会解释不清：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">层次</th>
+<th style="text-align: left;">名字</th>
+<th style="text-align: left;">决定什么</th>
+<th style="text-align: left;">在哪里改</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">应用层</td>
+<td style="text-align: left;"><strong>profile</strong></td>
+<td style="text-align: left;">启动时加载哪一整套配置</td>
+<td style="text-align: left;"><code>$DSH_HOME/profiles/&lt;profile&gt;/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">会话层</td>
+<td style="text-align: left;"><strong>Agent 预设（模式）</strong></td>
+<td style="text-align: left;">这个会话里模型能用哪些工具</td>
+<td style="text-align: left;">会话界面选择</td>
+</tr>
+</tbody>
+</table></div>
+<p>一个插件装进了 <code>web</code> 这个 profile，只说明“用 web 启动时它会被加载”；你在桌面版（<code>desktop</code> profile）里当然看不到它。</p>
+<p>同理：在 <code>desktop</code> profile 里装了插件，但会话选的是“极简模式”，工具被裁掉了，也不代表插件没装上。</p>
+<h2 id="c6-s3">6.2 插件长什么样<a class="anchor" href="#c6-s3" aria-label="本节链接">#</a></h2>
+<p>桌面版左侧“插件”页能看到两类东西：官方与社区提供的成形插件，以及你自己开发的本地插件。</p>
+<div class="figgrid">
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%8710.PNG" alt="插件页中的插件列表"><figcaption>图 6-1　插件页：内置能力与已安装插件</figcaption></figure>
+<figure><img src="https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/%E5%B9%BB%E7%81%AF%E7%89%8711.PNG" alt="自定义开发的插件条目"><figcaption>图 6-2　自己开发并通过路径添加的插件</figcaption></figure>
+</div>
+
+<p>不管界面怎么展示，最小形态就是一个导出 <code>apply</code> 的 TypeScript 模块。框架加载时调用 <code>apply(ctx)</code>，你通过 <code>ctx</code> 注册能力（工具、事件监听、模型适配器等）。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">typescript</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">// 文件路径：demo-plugin/src/index.ts
+import type { Context } from '@deepseek-ai/cordis'
+
+// 插件名：出现在日志与配置里，便于定位
+export const name = 'demo-plugin'
+
+// 入口：加载时被调用一次
+export function apply(ctx: Context) {
+  console.log('[demo-plugin] loaded')
+}
+</code></pre></div>
+<p>三种写法，按需要选：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">形态</th>
+<th style="text-align: left;">写法</th>
+<th style="text-align: left;">什么时候用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">函数</td>
+<td style="text-align: left;">导出独立 <code>apply</code></td>
+<td style="text-align: left;">大多数情况，最简单</td>
+</tr>
+<tr>
+<td style="text-align: left;">对象</td>
+<td style="text-align: left;"><code>export default { name, inject, apply }</code></td>
+<td style="text-align: left;">需要声明依赖等元信息</td>
+</tr>
+<tr>
+<td style="text-align: left;">类</td>
+<td style="text-align: left;"><code>export default class extends Service</code></td>
+<td style="text-align: left;">要向别的插件提供服务</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout warning"><div class="co-body"><p><strong>不要画蛇添足加 <code>export default</code>。</strong> Loader 优先取 default 导出；如果你用函数形态又加了一行 <code>export default apply</code>，命名空间上声明的 <code>inject</code> 会被整个丢掉，插件会在“零依赖”状态下启动——看起来加载成功，实际缺服务。</p></div></div>
+<h2 id="c6-s4">6.3 让插件接受配置<a class="anchor" href="#c6-s4" aria-label="本节链接">#</a></h2>
+<p>硬编码的参数是维护灾难。把可调项抽出来，用 Schemastery 声明默认值：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">typescript</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-typescript">// 文件路径：demo-plugin/src/index.ts
+import type { Context } from '@deepseek-ai/cordis'
+import Schema from '@deepseek-ai/schemastery'
+
+export const name = 'demo-plugin'
+
+export interface Config {
+  greeting: string      // 问候语
+  maxRetries: number    // 最大重试次数
+  verbose?: boolean     // 是否输出详细日志
+}
+
+// 同名 Config：默认值在这里
+export const Config: Schema&lt;Config&gt; = Schema.object({
+  greeting: Schema.string().default('Hello'),
+  maxRetries: Schema.number().default(3),
+  verbose: Schema.boolean().default(false),
+})
+
+// 第二个参数是校验后的配置
+export function apply(ctx: Context, config: Config) {
+  console.log(config.greeting)
+}
+</code></pre></div>
+<p>配置写在 profile 的补丁文件里：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml"># 文件路径：demo-plugin/cordis.yml（插件自带示例）
+- insert:
+    - id: demo
+      name: '/absolute/path/to/demo-plugin/src/index.ts'   # 必须是绝对路径
+      config:
+        greeting: 'Hi'
+        maxRetries: 5
+</code></pre></div>
+<p>判断一个参数该不该提成配置，只问一句：</p>
+<blockquote>
+<p><strong>能不能不改代码就改这个值？</strong></p>
+</blockquote>
+<p>不能，就提出来。另外，配置非法时插件应当<strong>明确报错并停止</strong>，不要带着半截配置继续跑——静默降级比崩溃更难查。</p>
+<h2 id="c6-s5">6.4 加载机制：<code>insert:</code> 是唯一的入口<a class="anchor" href="#c6-s5" aria-label="本节链接">#</a></h2>
+<p>插件的加载与替换都发生在 profile 的补丁文件里：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">$DSH_HOME/profiles/&lt;profile&gt;/cordis.patch.yml
+</code></pre></div>
+<p>核心语法：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml">- insert:
+    - id: demo
+      name: '/absolute/path/to/demo-plugin/src/index.ts'
+      config: { }
+</code></pre></div>
+<h3><code>insert:</code> 到底做了什么</h3>
+<p>它表示“往配置树的这个位置<strong>插入</strong>一条插件条目”。</p>
+<p>对比另一种写法：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml">- id: demo            # ❌ 裸条目
+  config: { }
+</code></pre></div>
+<p>裸 <code>- id:</code> 的语义是“<strong>覆盖已存在的配置行</strong>”。如果配置树里根本没有 <code>demo</code> 这一行，它就是在覆盖一个不存在的东西——<strong>什么都不做，也不报错</strong>。</p>
+<p>这就是“配置看着没问题、插件就是不见”的第一大原因。MCP 挂载（第 8、9 章）栽的也是这个坑。</p>
+<h3>三个必须记住的认知</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">认知</th>
+<th style="text-align: left;">后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">裸 <code>- id:</code> 是覆盖，不是新增</td>
+<td style="text-align: left;">目标不存在时静默无效</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">插件 Config 是判别联合，必填字段缺失会导致整份校验失败</td>
+<td style="text-align: left;">少一个 <code>transport</code> 就整体不加载</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">可选组件加载失败常常静默跳过</td>
+<td style="text-align: left;">界面无提示，模型说“没这个工具”</td>
+</tr>
+</tbody>
+</table></div>
+<h3>补丁会被程序改写</h3>
+<p>dsh 自己也会写这个文件（例如安装插件时重排条目）。所以：<strong>每次改动前先备份。</strong></p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash"># Windows PowerShell
+Copy-Item &quot;$env:USERPROFILE\.dsh\profiles\desktop\cordis.patch.yml&quot; `
+  &quot;$env:USERPROFILE\.dsh\profiles\desktop\cordis.patch.yml.bak-$(Get-Date -Format yyyyMMdd-HHmmss)&quot;
+
+# macOS / Linux
+cp ~/.dsh/profiles/desktop/cordis.patch.yml \
+   ~/.dsh/profiles/desktop/cordis.patch.yml.bak-$(date +%Y%m%d-%H%M%S)
+</code></pre></div>
+<p>改完先校验 YAML 没写坏（缩进、中文冒号、Tab 都是常客）：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">python -c &quot;import yaml,io;d=yaml.safe_load(io.open(r'&lt;文件路径&gt;',encoding='utf-8'));print('OK, 顶层条目', len(d))&quot;
+</code></pre></div>
+<p>再确认条目真的进了配置树：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">dsh --profile web --dump-config
+</code></pre></div>
+<h2 id="c6-s6">6.5 在应用里找插件<a class="anchor" href="#c6-s6" aria-label="本节链接">#</a></h2>
+<p>桌面版左侧“插件”页：</p>
+<ol>
+<li>先看<strong>已安装</strong>，确认现有的能力边界；</li>
+<li>进<strong>发现页</strong>，检查索引源是否配置好、能否刷新；</li>
+<li>打开详情，核对用途、版本、兼容范围、来源（npm 包还是 Git 仓库）；</li>
+<li>点安装，<strong>读确认框里的实际来源</strong>再决定。</li>
+</ol>
+<div class="callout important"><div class="co-body"><p>索引校验通过只代表“格式合法”，<strong>不代表官方审核过作者、代码或安全性</strong>。发现页没有合适的，就去 GitHub 按 <code>dsh-plugin</code> 话题找源码，自己看维护状态与依赖。</p></div></div>
+<h3>用创造模式做本地插件</h3>
+<ol>
+<li>在创作者模式里描述需求，等它写完；</li>
+<li>复制它给出的<strong>插件绝对路径</strong>；</li>
+<li>左侧插件 → 添加插件 → 填路径；</li>
+<li><strong>启用</strong>；</li>
+<li>回到插件列表确认出现新条目与入口。</li>
+</ol>
+<p>启用之后如果没反应，先按 6.7 的四项检查走一遍，不要急着重装。</p>
+<h2 id="c6-s7">6.6 用 CLI 装到指定 profile<a class="anchor" href="#c6-s7" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash"># npm 上的精确版本
+dsh plugin --profile web add your-plugin@1.2.3
+
+# 本地开发的插件目录
+dsh plugin --profile web add ./demo-plugin
+
+# 看最终组合
+dsh --profile web --dump-config
+</code></pre></div>
+<p>三个前提：</p>
+<ul>
+<li>包要声明 <code>dsh.bundle</code> 才能贡献配置层。<strong>普通依赖装成功 ≠ 能力已加载</strong>；</li>
+<li>CLI 只影响指定 profile。给 <code>web</code> 装的不会自动出现在 <code>desktop</code>；</li>
+<li>装第三方包时用固定版本或确切 commit，别追默认分支。</li>
+</ul>
+<h2 id="c6-s8">6.7 安装后的四项验收<a class="anchor" href="#c6-s8" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">检查</th>
+<th style="text-align: left;">通过标志</th>
+<th style="text-align: left;">不通过时查什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">兼容性</td>
+<td style="text-align: left;">安装器接受当前 dsh 版本</td>
+<td style="text-align: left;"><code>engines.dsh</code>、peer 依赖范围</td>
+</tr>
+<tr>
+<td style="text-align: left;">配置加载</td>
+<td style="text-align: left;"><code>--dump-config</code> 里有该条目</td>
+<td style="text-align: left;">安装目标 profile、bundle 声明、patch 路径</td>
+</tr>
+<tr>
+<td style="text-align: left;">依赖就绪</td>
+<td style="text-align: left;">插件处于激活状态，不是“等待依赖”</td>
+<td style="text-align: left;"><code>inject</code> 声明的服务当前组合是否提供</td>
+</tr>
+<tr>
+<td style="text-align: left;">实际能力</td>
+<td style="text-align: left;">新会话里工具被真实调用</td>
+<td style="text-align: left;">插件日志、工具返回</td>
+</tr>
+</tbody>
+</table></div>
+<p>第四项是唯一的终审。判断方式很土但有效：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 demo 插件跑一次，把返回值贴出来。
+</code></pre></div>
+<p>看到真实返回，才算通。<strong>不要问模型“你有哪些工具”</strong>——模型对自身工具表的自省并不可靠，答“没有”不代表没挂上，答“有”也可能是从上下文里猜的。</p>
+<h2 id="c6-s9">6.8 常见失败模式<a class="anchor" href="#c6-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">现象</th>
+<th style="text-align: left;">最可能原因</th>
+<th style="text-align: left;">快速验证</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">装完完全没变化</td>
+<td style="text-align: left;">装到了别的 profile</td>
+<td style="text-align: left;"><code>--dump-config</code> 看目标 profile</td>
+</tr>
+<tr>
+<td style="text-align: left;">配置树里没有条目</td>
+<td style="text-align: left;">用了裸 <code>- id:</code></td>
+<td style="text-align: left;">改成 <code>- insert:</code> 列表</td>
+</tr>
+<tr>
+<td style="text-align: left;">整份配置失效</td>
+<td style="text-align: left;">缺必填字段（如 <code>transport</code>）</td>
+<td style="text-align: left;">看启动日志的校验报错</td>
+</tr>
+<tr>
+<td style="text-align: left;">插件“已安装”但工具不出现</td>
+<td style="text-align: left;">依赖服务没提供</td>
+<td style="text-align: left;">查 <code>inject</code> 与当前组合</td>
+</tr>
+<tr>
+<td style="text-align: left;">改了配置没生效</td>
+<td style="text-align: left;">进程没真正退出</td>
+<td style="text-align: left;">结束托盘进程后重启</td>
+</tr>
+<tr>
+<td style="text-align: left;">老会话里没有新工具</td>
+<td style="text-align: left;">工具表是启动快照</td>
+<td style="text-align: left;">开新会话</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c6-s10">本章速记<a class="anchor" href="#c6-s10" aria-label="本节链接">#</a></h2>
+<ol>
+<li><strong>profile 管启动、模式管会话</strong>，两个层次别混。</li>
+<li><strong><code>insert:</code> 是唯一入口</strong>；裸 <code>- id:</code> 只是覆盖，目标不存在就静默无效。</li>
+<li><code>Config</code> 是判别联合，<strong>缺一个必填字段整份配置就不过</strong>。</li>
+<li>装完先看 <code>--dump-config</code>，再用“真实调用一次”做终审。</li>
+<li>补丁文件会被程序改写，<strong>改前先备份</strong>。</li>
+</ol>
+<div class="pager"><a class="prev" href="#chapter-5"><div class="pg-label">← 上一章</div><div class="pg-title">运行模式</div></a><a class="next" href="#chapter-7"><div class="pg-label">下一章 →</div><div class="pg-title">插件使用、发布</div></a></div>
+</section>
+<section class="chapter" id="chapter-7">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>插件篇</div>
+    <h1 class="ch-title">第 7 章 插件使用、发布插件</h1>
+    <p class="ch-sub">会话快照、HMR 与三种分发</p>
+    <div class="ch-meta">
+      <span>📖 第 7 章</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,444 字</span>
+    </div>
+  </div>
+  <h2 id="c7-s1">本章要解决的问题<a class="anchor" href="#c7-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>插件装上之后，怎么在会话里真正用起来？</li>
+<li>为什么同一个包，换个安装方式就可能报错？</li>
+<li>把插件交给别人时，怎么让对方“零授权”装上？</li>
+</ul>
+<h2 id="c7-s2">7.1 使用：三条规则<a class="anchor" href="#c7-s2" aria-label="本节链接">#</a></h2>
+<h3>规则一：新会话才看得见</h3>
+<p>插件提供的<strong>工具</strong>会进入新会话的工具表；提供的<strong>界面</strong>（侧栏、悬浮窗）会出现在应用对应位置。</p>
+<p>但旧会话的工具表是<strong>启动时快照</strong>：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">会话 A（启动时创建）── 工具表已固定
+   │
+   ├─ 期间安装插件 X
+   │
+   └─ 会话 A 仍然看不到 X 的工具
+        要看到 → 开新会话，或彻底重启应用
+</code></pre></div>
+<p>所以“装完没反应”的第一步不是重装，而是<strong>开个新会话试试</strong>。</p>
+<h3>规则二：插件工具和内置工具同一条流水线</h3>
+<p>插件注册的工具不会绕过审批、钩子、沙箱策略。这对安全是好事，对调试是提示：插件调用失败，可能不是插件的问题，而是被沙箱策略拦了。</p>
+<h3>规则三：用 Trajectory 看真相</h3>
+<p>Trajectory 视图能看到每次工具调用的入参与返回。判断插件行为是否正常，看这里，不看模型总结。</p>
+<h2 id="c7-s3">7.2 改配置会热替换，改代码不会<a class="anchor" href="#c7-s3" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你改了什么</th>
+<th style="text-align: left;">会发生什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>cordis.patch.yml</code> 里某个插件的 <code>config</code></td>
+<td style="text-align: left;">框架卸载旧实例、加载新实例（HMR），<strong>不用重启</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">插件源码（<code>.ts</code>）</td>
+<td style="text-align: left;">通常需要重载/重启，取决于是否启用监听</td>
+</tr>
+<tr>
+<td style="text-align: left;">插件的依赖版本</td>
+<td style="text-align: left;">需要重新安装并重启</td>
+</tr>
+</tbody>
+</table></div>
+<p>热替换之所以干净，是因为插件注册的能力都挂在 effect 上，实例卸载时会自动清理，不会留下“幽灵注册”。</p>
+<h2 id="c7-s4">7.3 健康检查：四个问题<a class="anchor" href="#c7-s4" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">问题</th>
+<th style="text-align: left;">怎么查</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">加载了吗</td>
+<td style="text-align: left;"><code>dsh --profile &lt;name&gt; --dump-config</code> 里有没有该条目</td>
+</tr>
+<tr>
+<td style="text-align: left;">依赖齐吗</td>
+<td style="text-align: left;"><code>inject</code> 声明的服务，当前组合是否提供</td>
+</tr>
+<tr>
+<td style="text-align: left;">工具真被调用了吗</td>
+<td style="text-align: left;">新会话说一句触发指令，看工具结果</td>
+</tr>
+<tr>
+<td style="text-align: left;">行为对吗</td>
+<td style="text-align: left;">会话日志、插件自身输出</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout warning"><div class="co-body"><p><strong>别用“你有哪些工具”来判断。</strong> 模型无法可靠自省工具表。唯一可信的证据是：下一条指令 → 触发一次调用 → 看返回值。</p></div></div>
+<p>一个可复用的验证话术：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 demo 插件的 greet 工具，问候语用 &quot;hi&quot;，重试 2 次。
+把工具的原始返回贴出来，不要改写。
+</code></pre></div>
+<p>要求它“贴原始返回”，能有效防止模型用自然语言掩盖失败。</p>
+<h2 id="c7-s5">7.4 发布：三种途径，差别在“装到的是什么”<a class="anchor" href="#c7-s5" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">方式</th>
+<th style="text-align: left;">用户命令</th>
+<th style="text-align: left;">装到的东西</th>
+<th style="text-align: left;">需要构建授权</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">npm</td>
+<td style="text-align: left;"><code>dsh plugin add your-pkg</code></td>
+<td style="text-align: left;">预构建的 <code>lib/</code></td>
+<td style="text-align: left;">不需要</td>
+</tr>
+<tr>
+<td style="text-align: left;">tarball</td>
+<td style="text-align: left;"><code>dsh plugin add ./pkg-0.1.0.tgz</code></td>
+<td style="text-align: left;"><code>pnpm pack</code> 的产物</td>
+<td style="text-align: left;">不需要</td>
+</tr>
+<tr>
+<td style="text-align: left;">Git</td>
+<td style="text-align: left;"><code>dsh plugin --profile demo add github:you/pkg</code></td>
+<td style="text-align: left;"><strong>源码</strong></td>
+<td style="text-align: left;">需要（pnpm ≥ 10）</td>
+</tr>
+</tbody>
+</table></div>
+<p>这张表的最后一列，是绝大多数“我这里好好的，用户装了就报错”的根源。</p>
+<h2 id="c7-s6">7.5 Git 安装：为什么 TypeScript 包会失败<a class="anchor" href="#c7-s6" aria-label="本节链接">#</a></h2>
+<p>Git 安装拉的是<strong>源码</strong>。整个链路里没有任何一步会运行你的 <code>build</code>，所以 TypeScript 包到手时没有 <code>lib/</code>，加载自然失败。</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">作者仓库（src/*.ts）
+      │  git clone / pnpm add github:...
+      ▼
+用户机器上的 node_modules/your-pkg/
+      ├── src/        ← 有
+      └── lib/        ← 没有（没人跑 build）
+                 │
+                 ▼
+           加载入口不存在 → 失败
+</code></pre></div>
+<p>修法要两边各做一件事。</p>
+<h3>作者侧：提供自包含的 <code>prepare</code></h3>
+<p>pnpm 在 git 安装后会执行 <code>prepare</code>。它必须<strong>自包含</strong>：</p>
+<ul>
+<li>不能假设“旁边还有一份 monorepo 源码”；</li>
+<li>不能依赖只在开发环境存在的路径映射；</li>
+<li>不要做类型检查（用户机器上未必有完整 devDependencies）。</li>
+</ul>
+<p>实践做法：让 <code>prepare</code> 跑一份专用的打包配置，直接转译 <code>src/</code>：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">json</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-json">{
+  &quot;name&quot;: &quot;dsh-demo-plugin&quot;,
+  &quot;scripts&quot;: {
+    &quot;prepare&quot;: &quot;tsdown -c tsdown.publish.ts&quot;
+  }
+}
+</code></pre></div>
+<h3>用户侧：为构建脚本授权</h3>
+<p>pnpm ≥ 10 默认<strong>拒绝执行 git 依赖的 <code>prepare</code></strong>，所以第一次 <code>add</code> 会失败。这不是 bug，是供应链安全设计——构建脚本能在你的机器上执行任意代码，且<strong>不在 Agent 的沙箱里</strong>。</p>
+<p>失败信息里会给出确切的包键。把它复制到该 profile 的 <code>pnpm-workspace.yaml</code>：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml"># 文件路径：$DSH_HOME/profiles/demo/pnpm-workspace.yaml
+allowBuilds:
+  dsh-demo-plugin: true
+</code></pre></div>
+<p>再执行一次 <code>add</code> 就通过了。</p>
+<div class="callout important"><div class="co-body"><p>这项授权的实质是：<strong>允许该包在安装时于你的机器上运行代码，且不受 Agent 沙箱约束</strong>。只对源码可信、或你审过的包授权。不要图省事写 <code>allowBuilds: { "*": true }</code>。</p></div></div>
+<h3>锁定 commit</h3>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">dsh plugin --profile demo add github:you/demo-plugin#a1b2c3d
+</code></pre></div>
+<p>理由很实际：分支会动，commit 不会。锁定之后，作者后续推送无法悄悄改变你机器上实际运行的代码。</p>
+<h2 id="c7-s7">7.6 npm 与 tarball：让用户零授权<a class="anchor" href="#c7-s7" aria-label="本节链接">#</a></h2>
+<p>不想让用户碰 <code>allowBuilds</code>，就把构建产物发出去。</p>
+<p><strong>npm 路线：</strong></p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash"># 作者侧：先构建，再发布
+pnpm build
+pnpm publish
+
+# 用户侧：装的是 lib/，无需授权
+dsh plugin add your-pkg
+</code></pre></div>
+<p><strong>tarball 路线（内网/私有交付常用）：</strong></p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash"># 作者侧
+pnpm pack            # 得到 your-pkg-0.1.0.tgz
+
+# 用户侧
+dsh plugin add ./your-pkg-0.1.0.tgz
+</code></pre></div>
+<p>两条路线都要求 <code>package.json</code> 的 <code>files</code> 字段包含 <code>lib/</code>，否则打出来的包里没有产物——这是“本地能用、发出去不能用”的第二个常见原因。</p>
+<h2 id="c7-s8">7.7 发布前的自检清单<a class="anchor" href="#c7-s8" aria-label="本节链接">#</a></h2>
+<p>发布一次就会有人装，装坏了浪费的是别人的时间。按顺序过一遍：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">检查项</th>
+<th style="text-align: left;">通过标准</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><code>files</code> 是否包含产物</td>
+<td style="text-align: left;"><code>npm pack --dry-run</code> 能看到 <code>lib/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>main</code>/<code>exports</code> 指向的文件存在</td>
+<td style="text-align: left;">在干净目录装一次，<code>require</code>/<code>import</code> 不报错</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">是否声明 <code>dsh.bundle</code></td>
+<td style="text-align: left;"><code>--dump-config</code> 里有条目</td>
+</tr>
+<tr>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">版本号语义</td>
+<td style="text-align: left;">破坏性改动升 major</td>
+</tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">依赖范围</td>
+<td style="text-align: left;">不要 <code>*</code>，不要依赖本地路径</td>
+</tr>
+<tr>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">权限最小化</td>
+<td style="text-align: left;">不需要的能力不要申请</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">README 写清安装方式</td>
+<td style="text-align: left;">用户知道该用哪条命令</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c7-s9">7.8 版本与兼容策略（个人建议）<a class="anchor" href="#c7-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">场景</th>
+<th style="text-align: left;">建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">内部自用</td>
+<td style="text-align: left;"><code>0.x</code> 快速迭代，锁 commit 分发</td>
+</tr>
+<tr>
+<td style="text-align: left;">小范围共享</td>
+<td style="text-align: left;">每次发版写 changelog，注明最低 dsh 版本</td>
+</tr>
+<tr>
+<td style="text-align: left;">公开包</td>
+<td style="text-align: left;">语义化版本 + <code>engines.dsh</code> 明确下限</td>
+</tr>
+<tr>
+<td style="text-align: left;">破坏性变更</td>
+<td style="text-align: left;">升 major，并在 README 顶部提示迁移方式</td>
+</tr>
+</tbody>
+</table></div>
+<p>dsh 本身在预览期，插件生态也在变。<strong>把兼容范围写进 <code>engines</code>，比在 README 里写“应该能用”负责得多。</strong></p>
+<h2 id="c7-s10">7.9 安全边界<a class="anchor" href="#c7-s10" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">风险点</th>
+<th style="text-align: left;">说明</th>
+<th style="text-align: left;">做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">构建脚本</td>
+<td style="text-align: left;">安装时执行，不在沙箱内</td>
+<td style="text-align: left;">只对可信包开 <code>allowBuilds</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">插件运行权限</td>
+<td style="text-align: left;">与内置工具同级，能读写工作区</td>
+<td style="text-align: left;">审代码，尤其是文件与网络操作</td>
+</tr>
+<tr>
+<td style="text-align: left;">供应链</td>
+<td style="text-align: left;">依赖树里任何一个包都可能带脚本</td>
+<td style="text-align: left;">锁版本、看 lockfile 变更</td>
+</tr>
+<tr>
+<td style="text-align: left;">密钥</td>
+<td style="text-align: left;">插件可能读到环境变量</td>
+<td style="text-align: left;">不要把密钥放在全局环境变量里</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c7-s11">本章速记<a class="anchor" href="#c7-s11" aria-label="本节链接">#</a></h2>
+<ol>
+<li>装完看不到工具，先<strong>开新会话</strong>，再怀疑安装。</li>
+<li>改 <code>config</code> 是热替换，改代码要重载。</li>
+<li><strong>Git 装源码，npm/tarball 装产物</strong>——这决定用户要不要授权。</li>
+<li><code>prepare</code> 必须自包含，别假设 monorepo 存在。</li>
+<li>锁 commit，是防止“代码悄悄变了”的最低成本手段。</li>
+</ol>
+<h2 id="c7-s12">延伸练习<a class="anchor" href="#c7-s12" aria-label="本节链接">#</a></h2>
+<ul>
+<li>把同一个插件分别用 tarball 和 Git 两种方式安装，记录用户侧的操作差异；</li>
+<li>在干净目录里 <code>npm pack</code> 后解压，检查 <code>lib/</code> 是否真的在包里；</li>
+<li>写一份 200 字的插件 README，只讲“怎么装、装完怎么验证”，逼自己把关键信息说清楚。</li>
+</ul>
+<div class="pager"><a class="prev" href="#chapter-6"><div class="pg-label">← 上一章</div><div class="pg-title">插件加载、安装</div></a><a class="next" href="#chapter-8"><div class="pg-label">下一章 →</div><div class="pg-title">Stata-Kernel-Jupyter</div></a></div>
+</section>
+<section class="chapter" id="chapter-8">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>Stata 计量实战篇</div>
+    <h1 class="ch-title">第 8 章 与 Stata-Kernel-Jupyter 相关应用</h1>
+    <p class="ch-sub">轻量执行通道的三条硬性要求</p>
+    <div class="ch-meta">
+      <span>📖 第 8 章</span>
+      <span>⏱ 约 6 分钟</span>
+      <span>🔖 2,456 字</span>
+    </div>
+  </div>
+  <h2 id="c8-s1">本章要解决的问题<a class="anchor" href="#c8-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>轻量执行通道和结构化结果通道，怎么选？</li>
+<li>一段 MCP 挂载配置，为什么少一行就完全无效？</li>
+<li>Stata 许可只有一个，两个通道同时开会发生什么？</li>
+</ul>
+<h2 id="c8-s2">8.1 它是什么：一根“能跑就行”的管子<a class="anchor" href="#c8-s2" aria-label="本节链接">#</a></h2>
+<p>Stata-Kernel-Jupyter（下称 SKJ）源自 Jupyter 生态里的 Stata 内核，MCP 化之后对外只暴露三个工具：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">作用</th>
+<th style="text-align: left;">返回什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>stata_run</code></td>
+<td style="text-align: left;">执行一段 Stata 代码</td>
+<td style="text-align: left;">原始文本结果（含日志）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_help</code></td>
+<td style="text-align: left;">查离线帮助</td>
+<td style="text-align: left;">帮助文本</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_dataset</code></td>
+<td style="text-align: left;">看当前数据集结构</td>
+<td style="text-align: left;">变量、观测等描述信息</td>
+</tr>
+</tbody>
+</table></div>
+<p>它的设计目标很朴素：<strong>把代码交给 Stata，把结果原样带回来</strong>。</p>
+<p>这既是优点也是局限：</p>
+<ul>
+<li>优点：轻、直接、启动快、行为可预测；</li>
+<li>局限：结果是非结构化文本，要靠模型自己从日志里找数字。</li>
+</ul>
+<p>对比 AIStata MCP 的 23 个工具（第 9 章），差别不是“强弱”，而是“<strong>要不要结构化</strong>”。</p>
+<h2 id="c8-s3">8.2 两条通道怎么选<a class="anchor" href="#c8-s3" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">维度</th>
+<th style="text-align: left;">SKJ</th>
+<th style="text-align: left;">AIStata MCP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">工具数量</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">23</td>
+</tr>
+<tr>
+<td style="text-align: left;">结果形态</td>
+<td style="text-align: left;">纯文本执行结果</td>
+<td style="text-align: left;">结构化 <code>RunResult</code>（<code>ok</code>/<code>log</code>/<code>returns</code>/<code>dataset</code>）</td>
+</tr>
+<tr>
+<td style="text-align: left;">数据审计</td>
+<td style="text-align: left;">需自己写代码</td>
+<td style="text-align: left;">内置 <code>data_audit</code> / <code>codebook</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">图形</td>
+<td style="text-align: left;">需自己导出</td>
+<td style="text-align: left;"><code>get_graph</code> 直接取</td>
+</tr>
+<tr>
+<td style="text-align: left;">长任务</td>
+<td style="text-align: left;">无</td>
+<td style="text-align: left;"><code>stata_run_async</code> + <code>stata_job_status</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">适合</td>
+<td style="text-align: left;">快速验证语法、查帮助、教学演示</td>
+<td style="text-align: left;">复现工程、结果抓取、数据体检</td>
+</tr>
+<tr>
+<td style="text-align: left;">建议</td>
+<td style="text-align: left;">二选一</td>
+<td style="text-align: left;">主力通道</td>
+</tr>
+</tbody>
+</table></div>
+<p>决策很简单：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">你要做的是一次性验证（这段代码语法对不对）？
+   ├── 是 → SKJ 够用
+   └── 否 → 你要拿回结构化结果（系数、R²、N）做后续处理？
+             ├── 是 → AIStata
+             └── 否 → 看许可：只能跑一个，就选 AIStata
+</code></pre></div>
+<div class="callout important"><div class="co-body"><p><strong>Stata 许可会被抢占。</strong> 每条 MCP 通道都会拉一个独立的 Stata 进程，各占一个席位。单机单许可时，两个客户端同时跑，必有一个报 <code>unable to obtain a license</code>。<strong>建议只保留一条通道</strong>；确需并存，也不要同时执行任务。</p></div></div>
+<h2 id="c8-s4">8.3 接入：写在 profile 补丁里<a class="anchor" href="#c8-s4" aria-label="本节链接">#</a></h2>
+<p>先说最容易走错的一步：</p>
+<blockquote>
+<p><strong>桌面版不读 <code>~/.deepseek/mcp.json</code>。</strong></p>
+</blockquote>
+<p>往那儿写多少条都不会生效，模型永远说“我没有 stata 工具”。MCP 服务器必须挂在 profile 的 <code>cordis.patch.yml</code> 里。</p>
+<p>文件位置：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">平台</th>
+<th style="text-align: left;">路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Windows</td>
+<td style="text-align: left;"><code>%USERPROFILE%\.dsh\profiles\desktop\cordis.patch.yml</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">macOS</td>
+<td style="text-align: left;"><code>~/.dsh/profiles/desktop/cordis.patch.yml</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>写法：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml"># 文件路径：上面那个 cordis.patch.yml
+- insert:                                 # [1] 必须是 insert 列表
+    - id: skj-mcp                         # 唯一 id，可自取
+      name: &quot;@deepseek-ai/dsh-mcp-client&quot;
+      config:
+        serverName: stata-kernel-jupyter   # 工具前缀：mcp__stata-kernel-jupyter__*
+        transport: stdio                  # [2] 必填，缺了静默失败
+        command: 'C:\Python312\python.exe'        # Python 绝对路径
+        args:
+          - 'C:\skj\stata-kernel-jupyter-launcher.py'   # 启动器绝对路径
+          - mcp
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        toolCallTimeoutMs: 600000         # 10 分钟，跑大 do 文件够用
+        failOnStartupError: false
+</code></pre></div>
+<h2 id="c8-s5">8.4 三条硬性要求<a class="anchor" href="#c8-s5" aria-label="本节链接">#</a></h2>
+<p>缺一条就会“看起来配了、其实没挂上”：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">#</th>
+<th style="text-align: left;">要求</th>
+<th style="text-align: left;">缺了会怎样</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">必须有 <code>insert:</code></td>
+<td style="text-align: left;">裸 <code>- id:</code> 只是覆盖一个不存在的行，等于没写</td>
+</tr>
+<tr>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><code>config.transport: stdio</code></td>
+<td style="text-align: left;">判别联合缺必填字段，整份配置校验失败</td>
+</tr>
+<tr>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">改完彻底退出应用（含托盘）</td>
+<td style="text-align: left;">旧会话工具表是启动快照，新开会话也不热加载</td>
+</tr>
+</tbody>
+</table></div>
+<p>第 3 条最容易被“我重启了啊”糊弄过去：</p>
+<ul>
+<li>Windows：关窗口只是最小化到托盘，要右键托盘图标 → 退出；</li>
+<li>macOS：点红叉不退出，要 <code>Cmd+Q</code>。</li>
+</ul>
+<p>验证是否真退干净：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash"># Windows
+tasklist | findstr -i deepseek
+
+# macOS
+pgrep -i deepseek
+</code></pre></div>
+<div class="callout warning"><div class="co-title"><span class="co-ico">⚠️</span>两个 schema 陷阱：</div><div class="co-body"><ol>
+<li><code>idleTimeoutMs</code> 不在 schema 里，写了会被静默剥掉，别浪费时间；</li>
+<li>两个服务器的 <code>serverName</code> 不能重名，否则工具名冲突会被拒。</li>
+</ol></div></div>
+<h2 id="c8-s6">8.5 操作步骤<a class="anchor" href="#c8-s6" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">1. 备份 cordis.patch.yml
+2. 把挂载块追加到文件末尾（顶格，&quot;- insert:&quot; 不要缩进）
+3. 校验 YAML：
+   python -c &quot;import yaml,io;d=yaml.safe_load(io.open(r'&lt;路径&gt;',encoding='utf-8'));print('OK')&quot;
+4. 彻底退出 DSH（含托盘），确认无残留进程
+5. 重启，开新会话
+6. 验证：让它执行 &quot;display 2+3&quot;，看返回是不是 5
+</code></pre></div>
+<p>第 6 步是<strong>唯一的验收标准</strong>。不要用“插件列表里有了”来判断——列表里有、工具没挂上，是很常见的状态。</p>
+<h2 id="c8-s7">8.6 三个使用场景<a class="anchor" href="#c8-s7" aria-label="本节链接">#</a></h2>
+<h3>场景一：对话式快速执行</h3>
+<p>把 DSH 当“会解释的 Stata 控制台”：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 stata-kernel-jupyter 依次执行下面三行，并解释每一步的输出：
+sysuse auto, clear
+summarize price mpg
+regress price mpg weight
+</code></pre></div>
+<p>期望结果可以核对：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">项目</th>
+<th style="text-align: left;">期望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">观测数</td>
+<td style="text-align: left;">74</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>price</code> 均值</td>
+<td style="text-align: left;">约 6165.26</td>
+</tr>
+<tr>
+<td style="text-align: left;">回归</td>
+<td style="text-align: left;">三个系数 + 标准误 + R²</td>
+</tr>
+</tbody>
+</table></div>
+<p>如果数字对不上，先怀疑数据没加载成功（看日志里有没有 <code>sysuse</code> 的报错），再怀疑通道。</p>
+<h3>场景二：先查帮助，再写代码</h3>
+<p><code>stata_help</code> 的价值在于“离线、原文”：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">先查 xtreg 的语法和 vce(robust) 选项，再写一个固定效应模型示例，
+并说明什么时候该用 fe 而不是 re。
+</code></pre></div>
+<p>比让模型凭记忆背语法可靠得多，尤其是老命令和历史版本差异。</p>
+<h3>场景三：教学演示</h3>
+<p>SKJ 本来就来自 Jupyter 内核，同一套执行层可以在 Notebook 里以 <code>%%stata</code> 单元格使用。教学时可以“Notebook 讲义 + DSH 问答”共用一条通道，学生看到的是同一套环境。</p>
+<h2 id="c8-s8">8.7 验证与排错<a class="anchor" href="#c8-s8" aria-label="本节链接">#</a></h2>
+<p><strong>验证（唯一可信的方法）：</strong></p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 stata-kernel-jupyter 跑 display 2+3
+</code></pre></div>
+<p>返回 <code>5</code>，说明三层全通：MCP 进程起得来 → Stata 能执行 → 结果能回传。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">现象</th>
+<th style="text-align: left;">最可能原因</th>
+<th style="text-align: left;">怎么确认</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">模型说“没有 stata 工具”</td>
+<td style="text-align: left;">没重启 / 缺 <code>insert:</code> / 缺 <code>transport</code></td>
+<td style="text-align: left;">逐项查 yml；确认进程真退出了</td>
+</tr>
+<tr>
+<td style="text-align: left;">启动后行为异常、插件变少</td>
+<td style="text-align: left;">yml 写坏了，回退到默认</td>
+<td style="text-align: left;"><code>yaml.safe_load</code> 校验；回滚 <code>.bak-*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">工具名冲突</td>
+<td style="text-align: left;">两个 server 用了同一个 <code>serverName</code></td>
+<td style="text-align: left;">改名</td>
+</tr>
+<tr>
+<td style="text-align: left;">连上但一调就超时</td>
+<td style="text-align: left;">默认超时太短</td>
+<td style="text-align: left;">加 <code>toolCallTimeoutMs: 600000</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">首次调用慢 5–20 秒</td>
+<td style="text-align: left;">子进程空闲约 30 分钟自动退出</td>
+<td style="text-align: left;">正常；下次调用重新拉起</td>
+</tr>
+<tr>
+<td style="text-align: left;">中文变 <code>????</code></td>
+<td style="text-align: left;">缺 UTF-8 环境变量</td>
+<td style="text-align: left;">补 <code>PYTHONUTF8</code> / <code>PYTHONIOENCODING</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>一个判断顺序</h3>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">模型说没工具
+   │
+   ├─ yml 里有 insert: 吗？ ── 没有 → 加上
+   ├─ config 里有 transport: stdio 吗？ ── 没有 → 加上
+   ├─ 进程真退出了吗？ ── 没有 → 杀托盘进程重启
+   └─ 都对了 → 命令行直接跑启动器，看它自己能不能起来
+</code></pre></div>
+<p>最后一步是分界线：<strong>启动器能跑 = 服务没问题，问题在客户端配置</strong>；启动器也起不来 = 环境问题，去查 Python 路径和包。</p>
+<h2 id="c8-s9">8.8 换机迁移<a class="anchor" href="#c8-s9" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">项目</th>
+<th style="text-align: left;">要做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>cordis.patch.yml</code></td>
+<td style="text-align: left;">用模板重写，旧文件里的 Python 路径全部作废</td>
+</tr>
+<tr>
+<td style="text-align: left;">启动器路径</td>
+<td style="text-align: left;">重新确认，不要照抄旧机器的盘符</td>
+</tr>
+<tr>
+<td style="text-align: left;">旧的 <code>~/.deepseek/mcp.json</code></td>
+<td style="text-align: left;">可以忽略（DSH 不读）；想干净就删</td>
+</tr>
+<tr>
+<td style="text-align: left;">DSH 本体</td>
+<td style="text-align: left;">新机器重装，装完才有 <code>profiles/desktop/</code> 目录</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stata</td>
+<td style="text-align: left;">确认许可有效，<code>python -c "import pystata"</code> 能过</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c8-s10">本章速记<a class="anchor" href="#c8-s10" aria-label="本节链接">#</a></h2>
+<ol>
+<li>SKJ 是<strong>轻量执行通道</strong>：三个工具，纯文本结果。</li>
+<li>挂载只在 <code>cordis.patch.yml</code>，<code>mcp.json</code> 是无效路径。</li>
+<li><strong><code>insert:</code> + <code>transport: stdio</code> + 彻底重启</strong>，三条缺一不可。</li>
+<li>一个 Stata 许可只能一个实例，两条通道别同时跑。</li>
+<li>验收标准是 <code>display 2+3</code> 返回 <code>5</code>，不是“配置看起来对”。</li>
+</ol>
+<h2 id="c8-s11">延伸练习<a class="anchor" href="#c8-s11" aria-label="本节链接">#</a></h2>
+<ul>
+<li>按 8.5 走一遍，把每一步的实际输出记录下来（尤其是 <code>--dump-config</code> 里的条目）；</li>
+<li>故意删掉 <code>transport: stdio</code>，观察启动表现，记住“没有报错但不生效”的手感；</li>
+<li>用 <code>stata_help</code> 查一个你不熟的命令，对比模型凭记忆回答的差异。</li>
+</ul>
+<div class="pager"><a class="prev" href="#chapter-7"><div class="pg-label">← 上一章</div><div class="pg-title">插件使用、发布</div></a><a class="next" href="#chapter-9"><div class="pg-label">下一章 →</div><div class="pg-title">AIStata MCP</div></a></div>
+</section>
+<section class="chapter" id="chapter-9">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>Stata 计量实战篇</div>
+    <h1 class="ch-title">第 9 章 与 AIStata MCP 相关应用</h1>
+    <p class="ch-sub">23 个工具与四连坑复盘</p>
+    <div class="ch-meta">
+      <span>📖 第 9 章</span>
+      <span>⏱ 约 9 分钟</span>
+      <span>🔖 3,591 字</span>
+    </div>
+  </div>
+  <h2 id="c9-s1">本章要解决的问题<a class="anchor" href="#c9-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>一条“跑个回归”的指令，在系统里到底走了哪几步？</li>
+<li>23 个工具怎么分工，什么时候用哪个？</li>
+<li>为什么配置看起来全对，模型却说没有工具？</li>
+</ul>
+<h2 id="c9-s2">9.1 它是什么：一层 Stata AI 接入层<a class="anchor" href="#c9-s2" aria-label="本节链接">#</a></h2>
+<p>AIStata 的结构可以用一句话概括：</p>
+<blockquote>
+<p><strong>一个 Python 内核，多个前端。</strong></p>
+</blockquote>
+<p>VS Code 扩展、MCP 服务、CLI、Jupyter kernel、Python API 共用同一个 <code>aistata</code> 包，但<strong>不共享进程与会话</strong>。</p>
+<p>这一点很重要：MCP 服务是独立进程，它有自己的 Stata 会话、自己的内存数据集。你在 VS Code 里 <code>use</code> 的数据，MCP 这边看不到，除非它自己也 <code>use</code> 一次。</p>
+<p>本章只讲 MCP 这一面：23 个工具，以及它怎么接进 DeepSeek Harness。</p>
+<h2 id="c9-s3">9.2 一次调用的完整路径<a class="anchor" href="#c9-s3" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">[1] DSH 读取 cordis.patch.yml
+        │  spawn
+        ▼
+[2] python.exe ...\aistata-mcp-launcher.py mcp
+        │  启动器：设 sys.path、设 UTF-8、转交 aistata.cli.main(['mcp'])
+        ▼
+[3] 握手：initialize / tools/list
+        │  DSH 拿到 23 个工具的描述
+        ▼
+[4] 模型决定调用 stata_run
+        │  DSH 通过 stdin 写一行 JSON-RPC
+        ▼
+[5] mcp.py 解析 → engine.py 选驱动（pystata 优先）→ 交给 Stata 执行
+        │
+        ▼
+[6] 结果封装为 RunResult v1（ok / log / returns / dataset）
+        │  stdout 回一行 JSON
+        ▼
+[7] 模型读到结构化结果，开始解释
+</code></pre></div>
+<h3>为什么用 stdio 而不是 HTTP</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">维度</th>
+<th style="text-align: left;">stdio</th>
+<th style="text-align: left;">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">端口</td>
+<td style="text-align: left;">不占</td>
+<td style="text-align: left;">要分配、要防冲突</td>
+</tr>
+<tr>
+<td style="text-align: left;">隔离</td>
+<td style="text-align: left;">进程级天然隔离</td>
+<td style="text-align: left;">靠服务端实现</td>
+</tr>
+<tr>
+<td style="text-align: left;">兼容性</td>
+<td style="text-align: left;">所有 MCP 客户端都支持</td>
+<td style="text-align: left;">需要额外配置</td>
+</tr>
+<tr>
+<td style="text-align: left;">排错</td>
+<td style="text-align: left;">看进程是否起来</td>
+<td style="text-align: left;">要看网络、端口、鉴权</td>
+</tr>
+</tbody>
+</table></div>
+<p>实务结论：<strong>别去找端口号，也不用开防火墙</strong>。连不上就是进程起不来，去查 Python 路径、包路径和环境变量。</p>
+<h2 id="c9-s4">9.3 23 个工具的分组<a class="anchor" href="#c9-s4" aria-label="本节链接">#</a></h2>
+<p>记住分组比记住名字有用——你需要的是“这类事该找谁”。</p>
+<h3>执行（5）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">用途</th>
+<th style="text-align: left;">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>stata_run</code></td>
+<td style="text-align: left;">跑一段代码</td>
+<td style="text-align: left;">多行用 <code>\n</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_run_file</code></td>
+<td style="text-align: left;">跑 <code>.do</code> 文件</td>
+<td style="text-align: left;">复现主力</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_run_async</code></td>
+<td style="text-align: left;">后台跑长任务</td>
+<td style="text-align: left;">bootstrap、模拟</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_job_status</code></td>
+<td style="text-align: left;">查后台进度</td>
+<td style="text-align: left;">配合上一个</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_cancel</code></td>
+<td style="text-align: left;">中断执行</td>
+<td style="text-align: left;">死循环时的救命键</td>
+</tr>
+</tbody>
+</table></div>
+<h3>数据（4）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>describe_data</code></td>
+<td style="text-align: left;">观测数、变量数、类型</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>browse_data</code></td>
+<td style="text-align: left;">分页看数据</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>codebook</code></td>
+<td style="text-align: left;">变量级字典：取值、标签、缺失</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>data_audit</code></td>
+<td style="text-align: left;">体检：重复 ID、缺失模式、异常值</td>
+</tr>
+</tbody>
+</table></div>
+<h3>结果（4）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">用途</th>
+<th style="text-align: left;">为什么需要它</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>get_log</code></td>
+<td style="text-align: left;">完整日志</td>
+<td style="text-align: left;">输出被截断时用</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_graph</code></td>
+<td style="text-align: left;">取图形（png）</td>
+<td style="text-align: left;">不用手动导图</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_table</code></td>
+<td style="text-align: left;">结构化结果（<code>e()</code>/<code>r()</code> 转表）</td>
+<td style="text-align: left;">数字可直接核对</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>read_stata_log</code></td>
+<td style="text-align: left;">读外部 <code>.log</code>/<code>.smcl</code></td>
+<td style="text-align: left;">对照论文历史输出</td>
+</tr>
+</tbody>
+</table></div>
+<h3>环境（5）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>stata_info</code></td>
+<td style="text-align: left;">引擎与驱动信息</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>doctor</code></td>
+<td style="text-align: left;">自检：版本、版别、驱动、依赖</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>check_dependencies</code></td>
+<td style="text-align: left;">查外部命令是否已装</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>install_package</code></td>
+<td style="text-align: left;">装 Stata 包（<strong>默认被守卫拦住</strong>）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stata_help</code></td>
+<td style="text-align: left;">离线帮助</td>
+</tr>
+</tbody>
+</table></div>
+<h3>会话（5）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">工具</th>
+<th style="text-align: left;">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>list_sessions</code></td>
+<td style="text-align: left;">列出活着的会话</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>new_session</code></td>
+<td style="text-align: left;">新建会话</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reset_session</code></td>
+<td style="text-align: left;">重置（清内存数据）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>close_session</code></td>
+<td style="text-align: left;">关闭（<strong>释放 Stata 席位</strong>）</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>list_runs</code></td>
+<td style="text-align: left;">本次进程内的运行历史</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout important"><div class="co-body"><p><code>install_package</code> 默认被安全守卫拦着（<code>allow_ado_install = false</code>）。要让 AI 能装包，得在 <code>config.toml</code> 里显式打开。这是有意设计：<strong>防止 AI 悄悄改动你的 Stata 环境</strong>。复现场景里，建议先让它 <code>check_dependencies</code> 报告缺什么，由人决定装不装。</p></div></div>
+<h2 id="c9-s5">9.4 挂载配置<a class="anchor" href="#c9-s5" aria-label="本节链接">#</a></h2>
+<p>文件仍是那个：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">%USERPROFILE%\.dsh\profiles\desktop\cordis.patch.yml     (Windows)
+~/.dsh/profiles/desktop/cordis.patch.yml                 (macOS)
+</code></pre></div>
+<div class="code-card"><div class="code-head"><span class="code-lang">yaml</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-yaml">- insert:                              # [1] 必须是 insert 列表
+    - id: aistata-mcp                  # 唯一 id
+      name: &quot;@deepseek-ai/dsh-mcp-client&quot;
+      config:
+        serverName: aistata            # 工具前缀：mcp__aistata__*
+        transport: stdio               # [2] 必填
+        command: '&lt;PYTHON&gt;'            # python 绝对路径
+        args:
+          - '&lt;LAUNCHER&gt;'               # aistata-mcp-launcher.py 绝对路径
+          - mcp
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+        toolCallTimeoutMs: 600000      # 10 分钟
+        failOnStartupError: false
+</code></pre></div>
+<p>四个要点：</p>
+<ol>
+<li><code>insert:</code> 是<strong>列表</strong>，一次可以挂多个服务器（第 8、9 章两条通道可以写在同一份文件里）；</li>
+<li><code>toolCallTimeoutMs</code> 在 schema 里；<code>idleTimeoutMs</code> <strong>不在</strong>，写了会被剥掉；</li>
+<li>两个 <code>serverName</code> 不能重名；</li>
+<li>用<strong>便携启动器</strong>，不要直接 <code>-m aistata</code>。启动器自己会找包、设 UTF-8、做用户目录兜底，不依赖客户端传来的环境。</li>
+</ol>
+<h3>操作步骤</h3>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">1. 备份 cordis.patch.yml
+2. 追加挂载块（顶格）
+3. 校验 YAML
+4. 彻底退出 DSH（含托盘）
+   Windows: tasklist | findstr -i deepseek
+   macOS:   pgrep -i deepseek
+5. 重启，开新会话
+6. 验证：doctor + sysuse auto
+</code></pre></div>
+<p>验证指令：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 aistata 的 doctor 工具看看环境。
+然后用 aistata 跑 sysuse auto, clear 和 summarize price mpg。
+</code></pre></div>
+<p>期望：74 个观测，<code>price</code> 均值约 6165.26。</p>
+<h2 id="c9-s6">9.5 “配了却没生效”：四个错误假设<a class="anchor" href="#c9-s6" aria-label="本节链接">#</a></h2>
+<p>这是本章最值得读的部分。四层错误叠在一起，会形成一种很难受的状态：<strong>配置看起来全对、模型说没工具、也没有任何报错</strong>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你以为</th>
+<th style="text-align: left;">实际</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">扩展会把配置写进 <code>~/.deepseek/mcp.json</code>，DSH 会读</td>
+<td style="text-align: left;">DSH 桌面版<strong>完全不读</strong>这个文件，挂载点只有 profile 补丁</td>
+</tr>
+<tr>
+<td style="text-align: left;">在 <code>cordis.patch.yml</code> 加一行 <code>- id: aistata-mcp</code> 就行</td>
+<td style="text-align: left;">插入行里没有 <code>mcp-client</code> 这个 id，裸条目只是覆盖不存在的行</td>
+</tr>
+<tr>
+<td style="text-align: left;">有 <code>id</code> 和 <code>name</code> 就够了</td>
+<td style="text-align: left;">还缺 <code>config.transport: stdio</code>，整份配置校验失败</td>
+</tr>
+<tr>
+<td style="text-align: left;">配置错了应该有报错</td>
+<td style="text-align: left;">app-boot 对“可选 MCP 配置失败”<strong>不中止</strong>，于是静默不挂载</td>
+</tr>
+<tr>
+<td style="text-align: left;">改完开个新会话就行</td>
+<td style="text-align: left;">工具表是启动快照，<strong>必须彻底退出进程</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>理解这四条之后，再看第 8、9 章的配置，就会明白为什么我把 <code>insert:</code> 和 <code>transport</code> 标了序号——它们不是风格问题，是生死问题。</p>
+<h2 id="c9-s7">9.6 常用指令<a class="anchor" href="#c9-s7" aria-label="本节链接">#</a></h2>
+<p>用自然语言驱动，比记工具名更实际：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">目标</th>
+<th style="text-align: left;">说法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">环境自检</td>
+<td style="text-align: left;">“用 aistata 的 doctor 看看 Stata 环境”</td>
+</tr>
+<tr>
+<td style="text-align: left;">看数据结构</td>
+<td style="text-align: left;">“describe 当前数据集，再用 codebook 看 x1 的取值和标签”</td>
+</tr>
+<tr>
+<td style="text-align: left;">数据体检</td>
+<td style="text-align: left;">“对 auto.dta 做 data_audit，报告重复、缺失、异常”</td>
+</tr>
+<tr>
+<td style="text-align: left;">跑 do 文件</td>
+<td style="text-align: left;">“用 stata_run_file 执行 analysis/main.do，完成后 summarize 主要结果”</td>
+</tr>
+<tr>
+<td style="text-align: left;">取完整日志</td>
+<td style="text-align: left;">“输出被截断了，用 get_log 取完整日志”</td>
+</tr>
+<tr>
+<td style="text-align: left;">取表格</td>
+<td style="text-align: left;">“用 get_table 把回归的 r2、系数、标准误取出来”</td>
+</tr>
+<tr>
+<td style="text-align: left;">取图形</td>
+<td style="text-align: left;">“把刚才 twoway 的图用 get_graph 给我”</td>
+</tr>
+<tr>
+<td style="text-align: left;">长任务</td>
+<td style="text-align: left;">“用 stata_run_async 跑 bootstrap，用 stata_job_status 查进度”</td>
+</tr>
+<tr>
+<td style="text-align: left;">释放许可</td>
+<td style="text-align: left;">“跑完了，close_session 释放席位”</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout note"><div class="co-body"><p>23 个工具的完整参数、<code>config.toml</code> 各项开关、以及“一次完整的实证项目怎么串起来”，属于专题课的实战部分，可结合 <a href="https://www.aistata.cn/2025AI.html" target="_blank" rel="noopener">最新公开课</a> 与 <a href="https://www.aistata.cn/" target="_blank" rel="noopener">AIStata MCP 主页</a> 一起看。本书只保留“装得上、跑得通、查得出”这条主线。</p></div></div>
+<h2 id="c9-s8">9.7 排错：按报错原文查<a class="anchor" href="#c9-s8" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">现象 / 报错</th>
+<th style="text-align: left;">最可能原因</th>
+<th style="text-align: left;">修法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">模型说“没有 aistata 工具”</td>
+<td style="text-align: left;">没重启 / 缺 <code>insert:</code> / 缺 <code>transport</code></td>
+<td style="text-align: left;">三项逐一查；先在命令行直调启动器验证服务</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ModuleNotFoundError: No module named 'aistata'</code></td>
+<td style="text-align: left;">启动器找不到包</td>
+<td style="text-align: left;">用启动器形态；确认 <code>pkgsrc</code> 已装</td>
+</tr>
+<tr>
+<td style="text-align: left;">客户端启动即失败、无日志</td>
+<td style="text-align: left;">路径含中文/空格；相对路径；args 不是数组</td>
+<td style="text-align: left;">纯英文路径；绝对路径；args 用数组</td>
+</tr>
+<tr>
+<td style="text-align: left;">JSON 写坏，客户端不加载</td>
+<td style="text-align: left;">多逗号、Windows 路径未转义</td>
+<td style="text-align: left;"><code>JSON.parse</code> 校验；路径用双反斜杠</td>
+</tr>
+<tr>
+<td style="text-align: left;">改完配置没生效</td>
+<td style="text-align: left;">环境变量 <code>AISTATA_*</code> 压过配置文件</td>
+<td style="text-align: left;">清掉环境变量，或干脆用它</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>unable to obtain a license</code></td>
+<td style="text-align: left;">多客户端抢单许可</td>
+<td style="text-align: left;">同时只让一个跑；跑完 <code>close_session</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">首次调用慢 5–20 秒</td>
+<td style="text-align: left;">子进程空闲 30 分钟自动退出</td>
+<td style="text-align: left;">正常；常驻可设 <code>AISTATA_MCP_IDLE_EXIT=0</code>（代价是占席位）</td>
+</tr>
+<tr>
+<td style="text-align: left;">中文变 <code>????</code></td>
+<td style="text-align: left;">缺 UTF-8</td>
+<td style="text-align: left;"><code>PYTHONUTF8=1</code> + <code>PYTHONIOENCODING=utf-8</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>No module named 'sfi'</code></td>
+<td style="text-align: left;">Stata &lt; 17 / 精简安装 / 位数不匹配</td>
+<td style="text-align: left;">升级 Stata，或接受 CLI 驱动（能跑，结构化结果少）</td>
+</tr>
+</tbody>
+</table></div>
+<h3>三步画出故障边界</h3>
+<p>这是换机时反复用的一套流程，比“猜”快得多：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">[1] node 工具/自检.js
+      → 判断扩展/配置这一层有没有断
+
+[2] python &lt;LAUNCHER&gt; doctor
+      → 判断 Python / aistata 包是否完好
+
+[3] python &lt;LAUNCHER&gt; run &quot;display 2+3&quot; --json
+      → 返回 {&quot;ok&quot;: true} 即三层全通
+</code></pre></div>
+<p>三步做完，“是服务坏了，还是客户端配错了”就不用猜了。</p>
+<h2 id="c9-s9">9.8 两条通道并存<a class="anchor" href="#c9-s9" aria-label="本节链接">#</a></h2>
+<p>技术上完全可以：两条 stdio 通道、两套 Stata 进程、两套工具前缀（<code>mcp__aistata__*</code> 与 <code>mcp__stata-kernel-jupyter__*</code>）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">你的需求</th>
+<th style="text-align: left;">建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">要结构化结果、数据审计、图表</td>
+<td style="text-align: left;">只留 AIStata</td>
+</tr>
+<tr>
+<td style="text-align: left;">只想快速跑一段代码</td>
+<td style="text-align: left;">只留 SKJ</td>
+</tr>
+<tr>
+<td style="text-align: left;">想对比“是不是封装层的问题”</td>
+<td style="text-align: left;">临时并存，但<strong>不同时执行</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">单机单许可</td>
+<td style="text-align: left;">强烈建议只留一条</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c9-s10">9.9 换机后要重做的事<a class="anchor" href="#c9-s10" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">项目</th>
+<th style="text-align: left;">动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>cordis.patch.yml</code></td>
+<td style="text-align: left;">用模板重写，旧 Python 路径全废</td>
+</tr>
+<tr>
+<td style="text-align: left;">启动器</td>
+<td style="text-align: left;">重新跑一键配置脚本，装到 <code>~/.aistata/bin/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">旧 <code>mcp.json</code></td>
+<td style="text-align: left;">忽略（不读）；想干净就删</td>
+</tr>
+<tr>
+<td style="text-align: left;">DSH</td>
+<td style="text-align: left;">新机器重装，才有 <code>profiles/desktop/</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Stata</td>
+<td style="text-align: left;">验证许可与 <code>pystata</code> 可用</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c9-s11">本章速记<a class="anchor" href="#c9-s11" aria-label="本节链接">#</a></h2>
+<ol>
+<li><strong>一个 Python 内核，多个前端，不共享会话</strong>——MCP 有自己的一份内存数据。</li>
+<li>stdio 不占端口，连不上就是<strong>进程没起来</strong>。</li>
+<li>23 个工具按“执行/数据/结果/环境/会话”记，比背名字有用。</li>
+<li><code>insert:</code>、<code>transport: stdio</code>、彻底重启，缺一即静默失败。</li>
+<li><code>doctor</code> → 直调启动器 → <code>display 2+3</code>，三步定位边界。</li>
+</ol>
+<h2 id="c9-s12">延伸练习<a class="anchor" href="#c9-s12" aria-label="本节链接">#</a></h2>
+<ul>
+<li>用 <code>get_table</code> 取一次回归结果，和 <code>get_log</code> 里的文本对照，体会结构化与非结构化的差别；</li>
+<li>跑一个 30 秒以上的任务，用 <code>stata_run_async</code> + <code>stata_job_status</code>，观察超时设置是否够用；</li>
+<li>在两条通道都挂载的情况下，同时发起调用，亲手见一次许可错误，比读十遍文档记得牢。</li>
+</ul>
+<div class="pager"><a class="prev" href="#chapter-8"><div class="pg-label">← 上一章</div><div class="pg-title">Stata-Kernel-Jupyter</div></a><a class="next" href="#chapter-10"><div class="pg-label">下一章 →</div><div class="pg-title">论文复现专题</div></a></div>
+</section>
+<section class="chapter" id="chapter-10">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>Stata 计量实战篇</div>
+    <h1 class="ch-title">第 10 章 论文复现专题</h1>
+    <p class="ch-sub">六阶段工作流与可审计报告</p>
+    <div class="ch-meta">
+      <span>📖 第 10 章</span>
+      <span>⏱ 约 5 分钟</span>
+      <span>🔖 2,196 字</span>
+    </div>
+  </div>
+  <h2 id="c10-s1">本章要解决的问题<a class="anchor" href="#c10-s1" aria-label="本节链接">#</a></h2>
+<ul>
+<li>为什么“AI 帮我跑一遍”和“可复现”是两件事？</li>
+<li>六个阶段各自要交付什么，怎么验收？</li>
+<li>结果对不上时，按什么顺序排查？</li>
+</ul>
+<h2 id="c10-s2">10.1 复现的敌人不是代码，是“说不清”<a class="anchor" href="#c10-s2" aria-label="本节链接">#</a></h2>
+<p>论文复现失败，多数时候不是作者写错了代码，而是：</p>
+<ul>
+<li>数据版本不明（同一份 <code>.dta</code>，不同年份下载内容不同）；</li>
+<li>包版本不同（<code>reghdfe</code> 新旧默认行为有差异）；</li>
+<li>样本筛选藏在某个 <code>if</code> 里，没写进正文；</li>
+<li>结果来自多次尝试中的一次，过程没留痕。</li>
+</ul>
+<p>传统做法靠“人肉考古”。DeepSeek Harness 的价值在于：<strong>它把过程本身记录下来了</strong>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">dsh 特性</th>
+<th style="text-align: left;">对复现的意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">仅追加会话日志 + Trajectory</td>
+<td style="text-align: left;">模型看到的提示词、每次工具调用全部留痕，过程<strong>可审计</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">profile + <code>--dump-config</code></td>
+<td style="text-align: left;">环境配置可导出存档，别人能重建你的 Agent</td>
+</tr>
+<tr>
+<td style="text-align: left;">headless 模式</td>
+<td style="text-align: left;">阶段任务可脚本化，适合批处理与 CI</td>
+</tr>
+<tr>
+<td style="text-align: left;">工具流水线（审批/沙箱）</td>
+<td style="text-align: left;">高危操作（删数据、装包）默认要人批，防止污染原始数据</td>
+</tr>
+<tr>
+<td style="text-align: left;">AIStata 23 工具</td>
+<td style="text-align: left;">结构化结果、数据审计、图形抓取，信息量远大于裸跑 do</td>
+</tr>
+</tbody>
+</table></div>
+<p>最后一条尤其关键：<strong>“AI 说跑出来了”不是证据，“<code>get_table</code> 返回的系数”才是证据。</strong></p>
+<div class="callout note"><div class="co-body"><p><strong>前提</strong>：已按第 9 章挂好 AIStata MCP，并且</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">python &lt;LAUNCHER&gt; run &quot;display 2+3&quot; --json
+</code></pre></div>
+<p>返回 <code>{"ok": true}</code>。这一步不过，后面全是空谈。</p></div></div>
+<h2 id="c10-s3">10.2 六阶段工作流<a class="anchor" href="#c10-s3" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">[1] 材料入库（论文 + 数据 + 代码）
+        │
+        ▼
+[2] 建复现工作区，dsh 选中该目录
+        │
+        ▼
+[3] 环境自检：doctor / check_dependencies
+        │
+        ▼
+[4] 数据审计：describe_data / codebook / data_audit
+        │
+        ▼
+[5] 跑主分析：stata_run_file / stata_run_async
+        │
+        ▼
+[6] 结果核验：get_table / get_log / read_stata_log
+        │
+        ├── 不一致 → 诊断（reset_session 后分步重跑）→ 回到 [5]
+        │
+        └── 一致 → 图表 + 复现报告 + Trajectory 存档
+</code></pre></div>
+<p>六个阶段的顺序不是随便排的。<strong>环境在数据之前，数据在跑之前，核验在结论之前</strong>——每一步都在为下一步排除变量。</p>
+<h2 id="c10-s4">10.3 阶段一：材料入库与只读盘点<a class="anchor" href="#c10-s4" aria-label="本节链接">#</a></h2>
+<p>把论文、README、数据、do 文件放进一个<strong>独立目录</strong>，例如：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">D:\replication\
+├── paper\           论文 PDF、附录
+├── data\            原始数据（只读）
+├── do\              作者代码
+├── output\          你的产出（图表、表格、日志）
+└── replication-checklist.md
+</code></pre></div>
+<p>在 dsh 里选中 <code>D:\replication</code>，第一条指令永远只读：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">请只读取当前目录下的 README 和 do/ 目录中的 .do 文件名，回答：
+1. 主表（Table 1/2）分别由哪个 do 文件生成；
+2. data/ 下有哪些数据文件，各自大小；
+3. 代码依赖哪些外部 Stata 包（如 reghdfe、ivreg2、estout）；
+4. 哪些步骤看起来会写入或覆盖文件。
+本轮只读取，不执行任何 Stata 命令，不修改任何文件。
+</code></pre></div>
+<p><strong>验收标准</strong>：它的回答里出现的文件名，与你在资源管理器里看到的一致。不一致，说明工作区选错了。</p>
+<div class="callout important"><div class="co-body"><p><strong>开工前先备份数据。</strong> 把 <code>data/</code> 整个复制一份到 <code>data_backup/</code>。访问模式优先用“工作区内修改”，“完全权限”留给确实需要的短时操作。</p></div></div>
+<h2 id="c10-s5">10.4 阶段二：环境自检<a class="anchor" href="#c10-s5" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 aistata 的 doctor 做环境自检，然后用 check_dependencies
+检查 reghdfe、ftools、estout、ivreg2 是否已安装。
+缺什么列出来先告诉我，不要自动安装。
+</code></pre></div>
+<p>三个要点：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">要点</th>
+<th style="text-align: left;">原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>doctor</code> 先跑</td>
+<td style="text-align: left;">版本、版别、驱动（pystata 优先）、依赖状态一次看清</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>install_package</code> 默认关</td>
+<td style="text-align: left;">让 AI 先报告、人再决定，避免悄悄改环境</td>
+</tr>
+<tr>
+<td style="text-align: left;">注意版本差异</td>
+<td style="text-align: left;">论文可能是 Stata 14/15 时代代码，语法与默认行为不同</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>验收标准</strong>：拿到一张“已装/缺失”清单，且缺失项是你决定要不要补的，不是它自己补的。</p>
+<h2 id="c10-s6">10.5 阶段三：数据审计（跑代码之前）<a class="anchor" href="#c10-s6" aria-label="本节链接">#</a></h2>
+<p>复现失败最常见的原因是<strong>数据对不上</strong>，不是代码写错。所以先审计：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">依次执行，每步把结构化结果返回给我：
+1. use &quot;data/main.dta&quot;, clear
+2. describe_data：观测数、变量数、类型
+3. data_audit：重复 ID、缺失模式、明显异常值
+4. codebook：因变量与核心解释变量的取值、标签、缺失
+5. 把论文表 1 的描述性统计与数据实际值逐项对照，列出不一致项。
+</code></pre></div>
+<p>为什么强调“结构化结果”：<code>describe_data</code> 返回的观测数、变量类型是字段，不是一段话。<strong>字段可以核对，话不可以。</strong></p>
+<p><strong>验收标准</strong>：样本量与论文表 1 一致；均值/标准差在合理误差内；不一致项被明确列出，而不是被一句“基本一致”带过。</p>
+<h2 id="c10-s7">10.6 阶段四：跑主分析<a class="anchor" href="#c10-s7" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">用 stata_run_file 执行 do/table2.do。
+执行前先告诉我这个文件会创建或覆盖哪些文件；
+执行后用 get_table 把主回归的系数、标准误、R²、N 取出来，对照论文表 2。
+</code></pre></div>
+<p>工程要点：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">情况</th>
+<th style="text-align: left;">做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">大任务（bootstrap、模拟）</td>
+<td style="text-align: left;"><code>stata_run_async</code> + <code>stata_job_status</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">输出被截断</td>
+<td style="text-align: left;"><code>get_log</code> 取完整日志（截断策略通常是头尾截取 + 字符上限）</td>
+</tr>
+<tr>
+<td style="text-align: left;">论文自带历史日志</td>
+<td style="text-align: left;"><code>read_stata_log</code> 读 <code>.log</code>/<code>.smcl</code> 对照</td>
+</tr>
+<tr>
+<td style="text-align: left;">跑完</td>
+<td style="text-align: left;"><code>close_session</code> 释放许可席位</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>验收标准</strong>：<code>get_table</code> 返回的表里，系数、标准误、N 是具体数字，不是“约等于”。</p>
+<h2 id="c10-s8">10.7 阶段五：核验与差异诊断<a class="anchor" href="#c10-s8" aria-label="本节链接">#</a></h2>
+<p>核验的黄金标准是<strong>逐表逐列对照</strong>，而不是“看起来差不多”。</p>
+<p>让 dsh 维护一张清单：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">创建 replication-checklist.md，逐行记录：
+表号 | 列 | 变量 | 复现值 | 论文值 | 相对差异 | 状态（一致/不一致/待查）
+先填 Table 2 的三列主结果。数值用 get_table 取，不要凭记忆抄。
+</code></pre></div>
+<h3>对不上时，按这个顺序查</h3>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">[1] reset_session 清内存 → 从 use 开始分步重跑
+       （排除上一次运行残留的数据/宏污染）
+[2] 核对样本筛选：if 条件、keep、权重，逐段看观测数
+[3] 核对包版本：reghdfe / ivreg2 新旧默认选项差异
+[4] 用 SKJ 通道做最小复现：裸执行，排除结果封装层的干扰
+[5] 仍不一致 → 联系作者，附上你的环境与清单
+</code></pre></div>
+<p>第 ① 步能解决相当一部分“玄学差异”——上一轮跑过的 <code>global</code>、<code>scalar</code>、内存数据，都会影响下一轮。</p>
+<p><strong>验收标准</strong>：清单里每一行都有“一致/不一致/待查”的明确状态，没有空白。</p>
+<h2 id="c10-s9">10.8 阶段六：图表与复现报告<a class="anchor" href="#c10-s9" aria-label="本节链接">#</a></h2>
+<div class="code-card"><div class="code-head"><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-text">1. 用 get_graph 把 table3.do 生成的图取出来，存到 output/figures/；
+2. 基于本次会话全过程，生成 replication-report.md，包含：
+   - 环境摘要（doctor 输出要点）
+   - 各阶段执行摘要与关键结果
+   - 与论文的对照结论
+   - 未复现项与可能原因
+3. 报告结尾列出本次会话修改过的所有文件。
+</code></pre></div>
+<h3>复现报告骨架</h3>
+<p>可以直接把这段作为模板：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">markdown</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-markdown"># 复现报告：&lt;论文标题&gt;
+
+## 1. 环境
+- Stata 版本/版别：
+- 驱动：pystata / CLI
+- dsh 版本：
+- 关键包版本：reghdfe __ / ftools __ / estout __
+
+## 2. 材料
+- 数据文件（名称、大小、校验和）：
+- 代码文件：
+- 论文版本：
+
+## 3. 数据审计结论
+- 样本量：复现 __ / 论文 __
+- 关键变量分布是否一致：
+
+## 4. 主结果对照
+| 表 | 列 | 变量 | 复现值 | 论文值 | 差异 | 状态 |
+
+## 5. 未复现项与原因假设
+- 项目：
+- 可能原因（数据/版本/筛选/代码）：
+- 下一步验证方式：
+
+## 6. 过程存档
+- 会话日志路径：
+- 配置导出：dsh --profile desktop --dump-config &gt; config-export.yml
+</code></pre></div>
+<p>Trajectory 视图导出的会话记录，是这份报告最好的附件：审稿人或合作者能看到“AI 每一步看到了什么、做了什么”。<strong>这正是可复现性研究需要的东西</strong>，也是普通“跑一遍”给不了的。</p>
+<h2 id="c10-s10">10.9 进阶：headless 批处理<a class="anchor" href="#c10-s10" aria-label="本节链接">#</a></h2>
+<p>流程稳定后，把阶段固化成命令：</p>
+<div class="code-card"><div class="code-head"><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="复制代码">复制</button></div><pre><code class="language-bash">dsh --profile headless &quot;读取 replication-checklist.md，用 aistata 跑 do/table4.do，核对结果并更新清单&quot;
+</code></pre></div>
+<p>配合 Git 管理复现工程：</p>
+<ul>
+<li>每个阶段开始前 <code>git commit</code>；</li>
+<li>阶段结束 <code>git diff</code> 看 AI 改了什么；</li>
+<li>会话日志按日期归档到 <code>output/logs/</code>。</li>
+</ul>
+<p>这样即使某次跑崩了，也能回到上一个干净状态。</p>
+<h2 id="c10-s11">10.10 六条守则<a class="anchor" href="#c10-s11" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">守则</th>
+<th style="text-align: left;">原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">原始数据只读，备份先行</td>
+<td style="text-align: left;">AI 误操作不可逆，审批是兜底不是保险箱</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>install_package</code> 默认关</td>
+<td style="text-align: left;">防止悄悄改环境，先报告再人工放行</td>
+</tr>
+<tr>
+<td style="text-align: left;">密钥不进复现包</td>
+<td style="text-align: left;">复现包可能被共享或公开发表</td>
+</tr>
+<tr>
+<td style="text-align: left;">每阶段一个会话</td>
+<td style="text-align: left;">会话干净，Trajectory 清晰，问题好定位</td>
+</tr>
+<tr>
+<td style="text-align: left;">Stata 单许可不并发</td>
+<td style="text-align: left;">多客户端同时跑，必有一个报许可错误</td>
+</tr>
+<tr>
+<td style="text-align: left;">结论必须核对原始输出</td>
+<td style="text-align: left;"><code>get_log</code>/<code>get_table</code> 取回结果再下结论，不信转述</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c10-s12">本章速记<a class="anchor" href="#c10-s12" aria-label="本节链接">#</a></h2>
+<ol>
+<li>复现的核心不是“跑通”，是<strong>说得清</strong>。</li>
+<li>六阶段：入库 → 环境 → 审计 → 执行 → 核验 → 报告，顺序不能乱。</li>
+<li>审计在跑代码之前，因为<strong>数据错比代码错更常见</strong>。</li>
+<li>差异诊断从 <code>reset_session</code> 开始，排除会话污染。</li>
+<li>报告 + Trajectory + 配置导出，三件套才叫“可复现”。</li>
+</ol>
+<h2 id="c10-s13">延伸练习<a class="anchor" href="#c10-s13" aria-label="本节链接">#</a></h2>
+<ul>
+<li>拿一篇有公开数据的论文，只做阶段一至三，练习“只读盘点 + 环境 + 审计”；</li>
+<li>故意改一个样本筛选条件，看清单里的差异如何体现，练习写“差异诊断”；</li>
+<li>把复现报告模板填一遍，重点写“未复现项与原因假设”——这一节最能体现你的判断力。</li>
+</ul>
+<div class="pager"><a class="prev" href="#chapter-9"><div class="pg-label">← 上一章</div><div class="pg-title">AIStata MCP</div></a><a class="next" href="#chapter-11"><div class="pg-label">下一章 →</div><div class="pg-title">公开课资源与链接</div></a></div>
+</section>
+<section class="chapter" id="chapter-11">
+  <div class="ch-head">
+    <div class="kicker"><span class="dot"></span>附录</div>
+    <h1 class="ch-title">关于公开课、文件与资源链接</h1>
+    <p class="ch-sub">本书仓库、课程与项目主页汇总</p>
+    <div class="ch-meta">
+      <span>📖 第 11 章</span>
+      <span>⏱ 约 3 分钟</span>
+      <span>🔖 479 字</span>
+    </div>
+  </div>
+  <p>本书是「数量经济学」微信公众号 2026 年 11 月—2027 年 1 月系列公开课的配套资料，逐章重写并持续更新。本章汇总本书仓库、公开课入口与相关项目主页，方便你随时找到最新版本与配套资源。</p>
+<h2 id="c11-s1">本书仓库与公开课入口<a class="anchor" href="#c11-s1" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>资源</th>
+<th>链接</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>本书仓库（GitHub）</td>
+<td><a href="https://github.com/AIStata/deepseek-harness-metrics" target="_blank" rel="noopener">https://github.com/AIStata/deepseek-harness-metrics</a></td>
+<td>全部章节源文件与最新修订，欢迎提 Issue 反馈</td>
+</tr>
+<tr>
+<td>最新公开课</td>
+<td><a href="https://www.aistata.cn/2025AI.html" target="_blank" rel="noopener">https://www.aistata.cn/2025AI.html</a></td>
+<td>2027 年 AIStata MCP + Agent 科研训练专题课页面</td>
+</tr>
+<tr>
+<td>系列专题课</td>
+<td><a href="https://mp.weixin.qq.com/s/LiqQKxHdMilu9FrWnQ5wQg" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/LiqQKxHdMilu9FrWnQ5wQg</a></td>
+<td>2027 年 AIStata MCP + Workbuddy + Claude 等智能体 + Stata 学术应用专题课</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c11-s2">相关项目主页<a class="anchor" href="#c11-s2" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>链接</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIStata MCP 主页</td>
+<td><a href="https://github.com/AIStata/AIStata-for-StataMCP" target="_blank" rel="noopener">https://github.com/AIStata/AIStata-for-StataMCP</a></td>
+<td>第 9 章接入的 23 工具 MCP 通道，配置与更新说明</td>
+</tr>
+<tr>
+<td>Stata-Kernel-Jupyter 主页</td>
+<td><a href="https://github.com/AIStata/Stata-Kernel-Jupyter" target="_blank" rel="noopener">https://github.com/AIStata/Stata-Kernel-Jupyter</a></td>
+<td>第 8 章接入的轻量执行通道，内核源码与文档</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="c11-s3">其他链接<a class="anchor" href="#c11-s3" aria-label="本节链接">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>资源</th>
+<th>链接</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI 工具导航</td>
+<td><a href="https://www.aistata.cn/aitools.html" target="_blank" rel="noopener">https://www.aistata.cn/aitools.html</a></td>
+<td>DeepSeekHarness、Workbuddy、Codex 等 8 个智能体平台专题页入口</td>
+</tr>
+<tr>
+<td>计量经济网</td>
+<td><a href="https://www.aistata.cn/" target="_blank" rel="noopener">https://www.aistata.cn/</a></td>
+<td>数量经济学微信公众号配套网站，课程与资料总入口</td>
+</tr>
+</tbody>
+</table></div>
+<div class="callout tip"><div class="co-title"><span class="co-ico">💡</span>提示</div><div class="co-body"><p>本书所有外部链接均在新的浏览器标签页中打开，阅读时不会丢失当前进度。若某个链接失效，请优先到本书仓库查看最新版说明。</p></div></div>
+<div class="pager"><a class="prev" href="#chapter-10"><div class="pg-label">← 上一章</div><div class="pg-title">论文复现专题</div></a><a class="disabled"></a></div>
+</section>
+
+<footer>
+  <div><b>DeepSeek Harness 实战手册</b> · 2026年11月—2027年1月系列公开课资料</div>
+  <div>适用 DSH 0.2.x / StataMP 18 · 以官方文档与实际配置为准</div>
+</footer>
+
+</article>
+</main>
+
+<div id="signbar">
+  <span><span class="sb-full">数量经济学微信公众号 </span>2026年11月—2027年1月</span>
+  <i></i><span>系列公开课</span>
+  <i></i><span>计量经济网 <a href="https://www.aistata.cn/" target="_blank" rel="noopener">www.aistata.cn</a></span>
+</div>
+
+<button id="totop" aria-label="返回顶部">↑</button>
+
+<script>
+(function(){
+  // 带锚点打开时先立即定位，避免平滑滚动被后续渲染打断
+  if(location.hash && location.hash.length>1){
+    var target=document.getElementById(location.hash.slice(1));
+    if(target){
+      var root=document.documentElement, old=root.style.scrollBehavior;
+      root.style.scrollBehavior='auto';
+      target.scrollIntoView();
+      root.style.scrollBehavior=old;
+    }
+  }
+  var bar=document.getElementById('progress'),totop=document.getElementById('totop');
+  var body=document.documentElement;
+  function onScroll(){
+    var max=body.scrollHeight-body.clientHeight||1;
+    bar.style.width=(body.scrollTop/max*100)+'%';
+    totop.classList.toggle('show',body.scrollTop>500);
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  totop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+  // 滚动高亮
+  var links=[].slice.call(document.querySelectorAll('#nav a[data-target]'));
+  var map={};links.forEach(function(a){map[a.getAttribute('data-target')]=a;});
+  var secs=[].slice.call(document.querySelectorAll('section.chapter'));
+  var cur=null;
+  function activate(id){
+    cur=id;
+    links.forEach(function(a){a.classList.remove('active');});
+    if(map[id]){
+      map[id].classList.add('active');
+      var r=map[id].getBoundingClientRect();
+      if(r.top<100||r.bottom>window.innerHeight-60){map[id].scrollIntoView({block:'nearest'});}
+    }
+  }
+  function spy(){
+    var y=window.scrollY+140,best=null;
+    secs.forEach(function(s){if(s.offsetTop<=y)best=s;});
+    var id=best?best.id:null;
+    if(id!==cur)activate(id);
+  }
+  window.addEventListener('scroll',spy,{passive:true});spy();
+
+  // 点击章节锚点（导航、封面卡片、翻页按钮）时立即高亮，不等滚动事件
+  document.querySelectorAll('a[href^="#chapter-"]').forEach(function(a){
+    a.addEventListener('click',function(){
+      var id=(a.getAttribute('href')||'').slice(1);
+      if(map[id])activate(id);
+    });
+  });
+  // 带 #chapter-N 打开页面时同步高亮
+  if(location.hash.indexOf('#chapter-')===0&&map[location.hash.slice(1)])activate(location.hash.slice(1));
+
+  // 移动端抽屉
+  var sb=document.getElementById('sidebar'),mask=document.getElementById('mask'),btn=document.getElementById('menu-btn');
+  function closeSb(){sb.classList.remove('open');mask.classList.remove('show');}
+  btn.addEventListener('click',function(){sb.classList.toggle('open');mask.classList.toggle('show');});
+  mask.addEventListener('click',closeSb);
+  links.forEach(function(a){a.addEventListener('click',closeSb);});
+
+  // 复制代码
+  document.querySelectorAll('.copy-btn').forEach(function(b){
+    b.addEventListener('click',function(){
+      var card=b.closest('.code-card'),code=card?card.querySelector('code'):null;
+      if(!code)return;
+      var txt=code.innerText;
+      var done=function(){b.textContent='已复制';b.classList.add('done');
+        setTimeout(function(){b.textContent='复制';b.classList.remove('done');},1600);};
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done).catch(function(){fallback(txt,done);});
+      }else{fallback(txt,done);}
+    });
+  });
+  function fallback(txt,cb){
+    var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');cb();}catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  // 目录搜索
+  var input=document.getElementById('nav-search'),empty=document.querySelector('.nav-empty');
+  if(input){
+    input.addEventListener('input',function(){
+      var q=input.value.trim().toLowerCase(),shown=0;
+      links.forEach(function(a){
+        var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+        a.classList.toggle('hide',!hit);if(hit)shown++;
+      });
+      document.querySelectorAll('.nav-part').forEach(function(p){
+        var n=p.nextElementSibling,any=false;
+        while(n&&!n.classList.contains('nav-part')){
+          if(n.matches&&n.matches('a')&&!n.classList.contains('hide'))any=true;
+          n=n.nextElementSibling;
+        }
+        p.style.display=(q&&!any)?'none':'';
+      });
+      if(empty)empty.classList.toggle('show',shown===0);
+    });
+  }
+})();
+</script>
+</body>
+</html>
