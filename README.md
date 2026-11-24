@@ -12,6 +12,11 @@
 
 &emsp;
 
+> ### [DeepseekHarness + Stata 专题公开课在线书籍](https://aistata.github.io/deepseek-harness-metrics/)
+
+
+&emsp;
+
 
 # **直播预告｜DeepSeek Harness+AIStata MCP公开课：一切皆插件，打造你的专属科研Agent**
 
