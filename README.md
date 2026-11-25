@@ -15,6 +15,11 @@
 > ### [DeepseekHarness + Stata 专题公开课在线书籍](https://aistata.github.io/deepseek-harness-metrics/)
 
 
+
+## 🌈❤️最新Stata课程--2017-2026年，数量经济学Stata课程已开设10年，10年Stata经典课程报名中！
+
+![](https://stata101.oss-cn-chengdu.aliyuncs.com/fig-metrics/Stata%E8%AF%BE%E7%A8%8B%E5%AE%A3%E4%BC%A0%E5%9B%BE%E7%89%87.png)
+
 &emsp;
 
 
